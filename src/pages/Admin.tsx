@@ -50,9 +50,10 @@ export default function Admin() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "categories" | "media">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "categories" | "media" | "users">("products");
   const [showMainImagePicker, setShowMainImagePicker] = useState(false);
   const [showGalleryImagePicker, setShowGalleryImagePicker] = useState(false);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
@@ -80,6 +81,7 @@ export default function Admin() {
     if (isAdmin) {
       fetchProducts();
       fetchOrders();
+      fetchUsers();
     }
   }, [isAdmin]);
 
@@ -124,6 +126,54 @@ export default function Admin() {
       fetchOrders();
     }
   };
+
+  const fetchUsers = async () => {
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("*");
+
+    if (profileError) {
+      toast({ title: "Error", description: profileError.message, variant: "destructive" });
+      return;
+    }
+
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("*");
+
+    if (rolesError) {
+      toast({ title: "Error", description: rolesError.message, variant: "destructive" });
+      return;
+    }
+
+    const usersWithRoles = profiles?.map(profile => ({
+      ...profile,
+      roles: roles?.filter(r => r.user_id === profile.id) || []
+    })) || [];
+
+    setUsers(usersWithRoles);
+  };
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    // First, delete existing role for this user
+    await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
+
+    // Then insert the new role
+    const { error } = await supabase
+      .from("user_roles")
+      .insert([{ user_id: userId, role: newRole as any }]);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "User role updated successfully" });
+      fetchUsers();
+    }
+  };
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -244,7 +294,7 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant={activeTab === "products" ? "default" : "outline"}
               onClick={() => setActiveTab("products")}
@@ -257,6 +307,12 @@ export default function Admin() {
               onClick={() => setActiveTab("orders")}
             >
               Orders
+            </Button>
+            <Button
+              variant={activeTab === "users" ? "default" : "outline"}
+              onClick={() => setActiveTab("users")}
+            >
+              Users
             </Button>
             <Button
               variant={activeTab === "categories" ? "default" : "outline"}
@@ -580,6 +636,57 @@ export default function Admin() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "users" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {users.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No users found. Users will appear here after they sign up.</p>
+                ) : (
+                  users.map((user) => (
+                    <Card key={user.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div>
+                            <p className="font-medium">{user.email || "No email"}</p>
+                            <p className="text-sm text-muted-foreground">
+                              User ID: {user.id.substring(0, 8)}...
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Joined: {new Date(user.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="w-48">
+                              <Label className="text-sm mb-2 block">Role</Label>
+                              <Select
+                                value={user.roles[0]?.role || "user"}
+                                onValueChange={(value) => handleUpdateUserRole(user.id, value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">User</SelectItem>
+                                  <SelectItem value="moderator">Moderator</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
