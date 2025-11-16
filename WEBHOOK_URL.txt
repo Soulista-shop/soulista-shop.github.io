@@ -1,0 +1,47 @@
+TELEGRAM WEBHOOK SETUP
+======================
+
+OPTION 1: Using Your Website Domain (RECOMMENDED & EASIEST)
+------------------------------------------------------------
+
+Your webhook URL will be:
+https://soulista.shop/telegram-webhook.php
+
+To set the webhook, open this URL in your browser:
+https://api.telegram.org/bot8218756776:AAFp4Y---2ZIJfrgC8u43AROPFtk1PK3NoA/setWebhook?url=https://soulista.shop/telegram-webhook.php
+
+The file public/telegram-webhook.php will be automatically deployed with your website.
+No extra deployment needed!
+
+OPTION 2: Using Supabase Edge Functions (More Complex)
+-------------------------------------------------------
+
+Your Supabase Edge Function URL:
+https://qwcddnoieksbunyuotww.supabase.co/functions/v1/telegram-webhook
+
+To set the webhook:
+https://api.telegram.org/bot8218756776:AAFp4Y---2ZIJfrgC8u43AROPFtk1PK3NoA/setWebhook?url=https://qwcddnoieksbunyuotww.supabase.co/functions/v1/telegram-webhook
+
+But you need to deploy the function first:
+supabase functions deploy telegram-webhook
+
+SECRET TOKEN: soulista_secret_2024
+(Change this in public/telegram-webhook.php)
+
+SUBSCRIBE COMMAND:
+/start soulista_secret_2024
+
+TESTING:
+--------
+1. Deploy your website with the telegram-webhook.php file
+2. Set the webhook using the URL above
+3. Send /start soulista_secret_2024 to your bot
+4. You should get: "✅ Successfully subscribed to order notifications!"
+5. Place a test order on your website
+6. Check Telegram for the order notification
+
+TROUBLESHOOTING:
+----------------
+- Bot not responding? Make sure your website is live and the PHP file is accessible
+- Check if https://soulista.shop/telegram-webhook.php returns a 200 status
+- Make sure the database migration has been run (telegram_subscribers table exists)

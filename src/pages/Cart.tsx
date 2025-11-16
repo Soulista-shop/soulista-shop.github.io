@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { sendOrderToTelegram } from "@/lib/telegram";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -37,25 +38,28 @@ export default function Cart() {
     try {
       const validated = checkoutSchema.parse(formData);
 
-      const { error } = await supabase.from("orders").insert([
-        {
-          customer_name: validated.name,
-          customer_email: validated.email,
-          customer_phone: validated.phone,
-          customer_address: validated.address,
-          items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-          })),
-          total_amount: total,
-          payment_method: "cash_on_delivery",
-          status: "pending",
-        },
-      ]);
+      const orderData = {
+        customer_name: validated.name,
+        customer_email: validated.email,
+        customer_phone: validated.phone,
+        customer_address: validated.address,
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        total_amount: total,
+        payment_method: "cash_on_delivery",
+        status: "pending",
+      };
+
+      const { error } = await supabase.from("orders").insert([orderData]);
 
       if (error) throw error;
+
+      // Send order notification to Telegram
+      await sendOrderToTelegram(orderData);
 
       toast({
         title: "Order Placed!",

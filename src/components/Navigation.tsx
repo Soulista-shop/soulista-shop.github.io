@@ -1,14 +1,31 @@
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingBag, LogIn, LogOut, Shield } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/lib/supabase";
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoSize, setLogoSize] = useState(64); // default 16 * 4 = 64px
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const { itemCount } = useCart();
+
+  useEffect(() => {
+    const fetchLogoSize = async () => {
+      const { data } = await supabase
+        .from("content_settings" as any)
+        .select("text_content")
+        .eq("section", "logo_size")
+        .single();
+      
+      if (data) {
+        setLogoSize(parseInt(data.text_content) * 4); // Convert h-16 to pixels (16 * 4 = 64px)
+      }
+    };
+    fetchLogoSize();
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -23,9 +40,14 @@ export const Navigation = () => {
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Soulista Brand Text - Left */}
+          {/* Soulista Logo - Left */}
           <Link to="/" className="flex items-center leading-none">
-            <span className="text-3xl font-brand text-foreground tracking-wide">Soulista</span>
+            <img 
+              src="/logo.png" 
+              alt="Soulista" 
+              className="w-auto"
+              style={{ height: `${logoSize}px` }}
+            />
           </Link>
 
           {/* Desktop Navigation - Right */}

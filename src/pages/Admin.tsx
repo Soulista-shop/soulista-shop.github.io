@@ -16,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CategorySettings } from "@/components/CategorySettings";
 import { MediaManager } from "@/components/MediaManager";
 import { MediaPicker } from "@/components/MediaPicker";
+import { ContentSettings } from "@/components/ContentSettings";
+import { ContactSettings } from "@/components/ContactSettings";
 
 
 interface Product {
@@ -51,9 +53,10 @@ export default function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "categories" | "media" | "users">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "categories" | "media" | "users" | "content" | "contact">("products");
   const [showMainImagePicker, setShowMainImagePicker] = useState(false);
   const [showGalleryImagePicker, setShowGalleryImagePicker] = useState(false);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
@@ -82,8 +85,20 @@ export default function Admin() {
       fetchProducts();
       fetchOrders();
       fetchUsers();
+      fetchCategories();
     }
   }, [isAdmin]);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("category_settings")
+      .select("category_name")
+      .order("category_name");
+
+    if (!error && data) {
+      setCategories(data.map(c => c.category_name));
+    }
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -179,14 +194,19 @@ export default function Admin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Ensure main_image is first in images array
+    const allImages = formData.main_image 
+      ? [formData.main_image, ...formData.images.filter(img => img !== formData.main_image)]
+      : formData.images;
+
     const productData = {
       name: formData.name,
       category: formData.category,
       price: parseFloat(formData.price),
       discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
       description: formData.description,
-      main_image: formData.main_image,
-      images: formData.images,
+      main_image: formData.main_image || allImages[0] || '',
+      images: allImages,
       featured: formData.featured,
       sort_order: formData.sort_order,
     };
@@ -232,6 +252,9 @@ export default function Admin() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    // Remove main_image from images array if it exists there
+    const galleryImages = (product.images || []).filter(img => img !== product.main_image);
+    
     setFormData({
       name: product.name,
       category: product.category,
@@ -239,7 +262,7 @@ export default function Admin() {
       discount_price: product.discount_price?.toString() || "",
       description: product.description,
       main_image: product.main_image,
-      images: product.images || [],
+      images: galleryImages,
       featured: product.featured || false,
       sort_order: product.sort_order || 0,
     });
@@ -319,7 +342,7 @@ export default function Admin() {
               onClick={() => setActiveTab("categories")}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Category Settings
+              Categories
             </Button>
             <Button
               variant={activeTab === "media" ? "default" : "outline"}
@@ -327,6 +350,18 @@ export default function Admin() {
             >
               <Upload className="mr-2 h-4 w-4" />
               Media Library
+            </Button>
+            <Button
+              variant={activeTab === "content" ? "default" : "outline"}
+              onClick={() => setActiveTab("content")}
+            >
+              Content
+            </Button>
+            <Button
+              variant={activeTab === "contact" ? "default" : "outline"}
+              onClick={() => setActiveTab("contact")}
+            >
+              Contact
             </Button>
           </div>
         </div>
@@ -368,8 +403,9 @@ export default function Admin() {
                         required
                       >
                         <option value="">Select category</option>
-                        <option value="Sets">Sets</option>
-                        <option value="Kaftans">Kaftans</option>
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -695,6 +731,10 @@ export default function Admin() {
         {activeTab === "categories" && <CategorySettings />}
 
         {activeTab === "media" && <MediaManager />}
+
+        {activeTab === "content" && <ContentSettings />}
+
+        {activeTab === "contact" && <ContactSettings />}
       </div>
 
       <MediaPicker

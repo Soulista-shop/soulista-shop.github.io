@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Instagram, Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useContent } from "@/hooks/useContent";
 
 // Resolve product asset image paths (supports assets and absolute URLs)
 const imageModules = import.meta.glob("/src/assets/products/*", { eager: true, as: "url" }) as Record<string, string>;
@@ -18,6 +19,8 @@ const resolveImage = (path?: string) => {
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getContent } = useContent();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -46,25 +49,24 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="gradient-hero py-8 md:py-12">
+      <section className="bg-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-              Elevate Your{" "}
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Style
-              </span>
+            <h1 className={`${getContent('hero_slogan').className} mb-6 animate-fade-in text-black`}>
+              {getContent('hero_slogan').text}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 animate-fade-in">
-              Discover contemporary women's casual wear that blends elegance, comfort, and modern sophistication.
+            <p className={`${getContent('hero_description').className} text-black mb-8 animate-fade-in`}>
+              {getContent('hero_description').text}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
-              <Link to="/shop">
-                <Button size="lg" className="w-full sm:w-auto shadow-elegant">
-                  Shop Collection
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto shadow-elegant"
+                onClick={() => { navigate('/shop'); window.scrollTo(0, 0); }}
+              >
+                Shop Collection
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
               <Link to="/about">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   Our Story
@@ -90,12 +92,14 @@ const Home = () => {
             ))}
           </div>
           <div className="text-center mt-12">
-            <Link to="/shop">
-              <Button variant="outline" size="lg">
-                View All Products
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => { navigate('/shop'); window.scrollTo(0, 0); }}
+            >
+              View All Products
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </div>
       </section>
@@ -104,10 +108,11 @@ const Home = () => {
       <section className="bg-muted py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">The Soulista Vision</h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              We believe that modern women deserve clothing that empowers them to feel confident, 
-              comfortable, and stylish in every moment of their day.
+            <h2 className={`${getContent('vision_title').className} mb-6`}>
+              {getContent('vision_title').text}
+            </h2>
+            <p className={`${getContent('vision_description').className} text-muted-foreground mb-8`}>
+              {getContent('vision_description').text}
             </p>
             <div className="flex gap-6 justify-center mb-8">
               <a 

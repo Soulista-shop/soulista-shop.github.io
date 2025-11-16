@@ -1,33 +1,36 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, Sparkles, Users } from "lucide-react";
+import { useContent } from "@/hooks/useContent";
 
 const About = () => {
+  const { getContent } = useContent();
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="gradient-hero py-20 md:py-32">
+      <section className="gradient-hero pt-20 md:pt-32 pb-8 md:pb-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Our Story
+            <h1 className={`${getContent('about_title').className} mb-6`}>
+              {getContent('about_title').text}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              Soulista was born from a passion to create clothing that celebrates the modern woman's spirit
+            <p className={`${getContent('about_description').className} text-muted-foreground`}>
+              {getContent('about_description').text}
             </p>
           </div>
         </div>
       </section>
 
       {/* Mission Section */}
-      <section className="py-16 md:py-24">
+      <section className="pt-4 md:pt-6 pb-8 md:pb-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Our Mission</h2>
-            <p className="text-lg text-muted-foreground text-center mb-12">
-              We believe that every woman deserves to feel confident, comfortable, and beautiful in what she wears. 
-              Our mission is to create timeless pieces that empower women to express their unique style while 
-              embracing comfort and quality.
+            <h2 className={`${getContent('mission_title').className} mb-8 text-center`}>
+              {getContent('mission_title').text}
+            </h2>
+            <p className={`${getContent('mission_description').className} text-muted-foreground text-center mb-12`}>
+              {getContent('mission_description').text}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
@@ -66,7 +69,7 @@ const About = () => {
       </section>
 
       {/* Values Section */}
-      <section className="bg-muted py-16 md:py-24">
+      <section className="bg-muted pt-8 md:pt-12 pb-16 md:pb-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Our Values</h2>

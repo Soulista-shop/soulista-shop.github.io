@@ -5,14 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-
 import { MediaPicker } from "@/components/MediaPicker";
 
-interface CategorySetting {
+interface Category {
   id: string;
   category_name: string;
   frame_enabled: boolean;
@@ -22,10 +20,10 @@ interface CategorySetting {
   background_blur: number;
 }
 
-export function CategorySettings() {
-  const [categorySettings, setCategorySettings] = useState<CategorySetting[]>([]);
+export function CategoryManagement() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategorySetting | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showFramePicker, setShowFramePicker] = useState(false);
   const [showBgPicker, setShowBgPicker] = useState(false);
   
@@ -39,54 +37,110 @@ export function CategorySettings() {
   });
 
   useEffect(() => {
-    fetchCategorySettings();
+    fetchCategories();
   }, []);
 
-  const fetchCategorySettings = async () => {
-    const { data, error } = await supabase
-      .from("category_settings")
-      .select("*")
-      .order("category_name", { ascending: true });
+  const fetchCategories = async () => {
+    // Get all unique categories from products
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("category");
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      setCategorySettings(data || []);
+    if (productsError) {
+      toast({ title: "Error", description: productsError.message, variant: "destructive" });
+      return;
     }
+
+    // Get unique categories
+    const uniqueCategories = [...new Set(products?.map(p => p.category) || [])];
+
+    // Get category settings
+    const { data: settings, error: settingsError } = await supabase
+      .from("category_settings")
+      .select("*");
+
+    if (settingsError) {
+      toast({ title: "Error", description: settingsError.message, variant: "destructive" });
+      return;
+    }
+
+    // Merge: create entries for categories that exist in products but not in settings
+    const allCategories: Category[] = uniqueCategories.map(catName => {
+      const existing = settings?.find(s => s.category_name === catName);
+      if (existing) {
+        return existing;
+      } else {
+        // Return a default entry for categories without settings
+        return {
+          id: `temp-${catName}`,
+          category_name: catName,
+          frame_enabled: false,
+          frame_image: null,
+          background_image: null,
+          background_opacity: 1.0,
+          background_blur: 0,
+        };
+      }
+    });
+
+    // Add any category settings that don't have products yet
+    settings?.forEach(setting => {
+      if (!uniqueCategories.includes(setting.category_name)) {
+        allCategories.push(setting);
+      }
+    });
+
+    setCategories(allCategories.sort((a, b) => a.category_name.localeCompare(b.category_name)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingCategory) {
+    if (editingCategory && !editingCategory.id.startsWith('temp-')) {
+      // Update existing category settings
       const { error } = await supabase
         .from("category_settings")
-        .update(formData)
+        .update({
+          category_name: formData.category_name,
+          frame_enabled: formData.frame_enabled,
+          frame_image: formData.frame_image || null,
+          background_image: formData.background_image || null,
+          background_opacity: formData.background_opacity,
+          background_blur: formData.background_blur,
+        })
         .eq("id", editingCategory.id);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Success", description: "Category settings updated" });
-        fetchCategorySettings();
+        toast({ title: "Success", description: "Category settings updated successfully" });
+        fetchCategories();
         resetForm();
       }
     } else {
+      // Create new category settings (either for existing category or new one)
       const { error } = await supabase
         .from("category_settings")
-        .insert([formData]);
+        .insert([{
+          category_name: formData.category_name,
+          frame_enabled: formData.frame_enabled,
+          frame_image: formData.frame_image || null,
+          background_image: formData.background_image || null,
+          background_opacity: formData.background_opacity,
+          background_blur: formData.background_blur,
+        }]);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Success", description: "Category settings created" });
-        fetchCategorySettings();
+        toast({ title: "Success", description: "Category settings saved successfully" });
+        fetchCategories();
         resetForm();
       }
     }
   };
 
-  const handleEdit = (category: CategorySetting) => {
+  const handleEdit = (category: Category) => {
     setEditingCategory(category);
     setFormData({
       category_name: category.category_name,
@@ -99,8 +153,17 @@ export function CategorySettings() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category setting?")) return;
+  const handleDelete = async (id: string, categoryName: string) => {
+    if (id.startsWith('temp-')) {
+      toast({ 
+        title: "Cannot Delete", 
+        description: "This category has products. Delete the products first or just remove the settings.",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the settings for "${categoryName}"? The category will still exist if products use it.`)) return;
 
     const { error } = await supabase
       .from("category_settings")
@@ -110,8 +173,8 @@ export function CategorySettings() {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Success", description: "Category settings deleted" });
-      fetchCategorySettings();
+      toast({ title: "Success", description: "Category settings deleted successfully" });
+      fetchCategories();
     }
   };
 
@@ -132,9 +195,9 @@ export function CategorySettings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Categories</CardTitle>
+          <CardTitle>Category Management</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your product categories and their display settings
+            Manage categories and their display settings (frames, backgrounds)
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -159,11 +222,7 @@ export function CategorySettings() {
                   onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
                   placeholder="e.g., Sets, Kaftans, Dresses"
                   required
-                  disabled={!!editingCategory}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {editingCategory ? "Category name cannot be changed" : "Enter a new category name"}
-                </p>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -174,13 +233,16 @@ export function CategorySettings() {
                     setFormData({ ...formData, frame_enabled: checked as boolean })
                   }
                 />
-                <Label htmlFor="frame_enabled">Enable Custom Frame</Label>
+                <Label htmlFor="frame_enabled">Enable Custom Frame & Background</Label>
               </div>
 
               {formData.frame_enabled && (
-                <>
+                <div className="space-y-4 pl-6 border-l-2">
                   <div>
-                    <Label>Frame Image (PNG with transparent background)</Label>
+                    <Label>Frame Image (PNG with transparent center)</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      This image will overlay on top of product images
+                    </p>
                     <div className="space-y-2">
                       <Button
                         type="button"
@@ -188,10 +250,10 @@ export function CategorySettings() {
                         className="w-full"
                         onClick={() => setShowFramePicker(true)}
                       >
-                        {formData.frame_image ? "Change Frame" : "Select from Media Library"}
+                        {formData.frame_image ? "Change Frame" : "Select Frame from Media"}
                       </Button>
                       {formData.frame_image && (
-                        <div className="relative w-32 h-32 border rounded">
+                        <div className="relative w-32 h-32 border rounded bg-gray-100">
                           <img src={formData.frame_image} alt="Frame" className="w-full h-full object-contain rounded" />
                           <Button
                             type="button"
@@ -209,6 +271,9 @@ export function CategorySettings() {
 
                   <div>
                     <Label>Background Image</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      This image will appear behind the product image
+                    </p>
                     <div className="space-y-2">
                       <Button
                         type="button"
@@ -216,7 +281,7 @@ export function CategorySettings() {
                         className="w-full"
                         onClick={() => setShowBgPicker(true)}
                       >
-                        {formData.background_image ? "Change Background" : "Select from Media Library"}
+                        {formData.background_image ? "Change Background" : "Select Background from Media"}
                       </Button>
                       {formData.background_image && (
                         <div className="relative w-32 h-32 border rounded">
@@ -236,7 +301,9 @@ export function CategorySettings() {
                   </div>
 
                   <div>
-                    <Label htmlFor="background_opacity">Background Opacity: {formData.background_opacity.toFixed(2)}</Label>
+                    <Label htmlFor="background_opacity">
+                      Background Opacity: {(formData.background_opacity * 100).toFixed(0)}%
+                    </Label>
                     <input
                       type="range"
                       id="background_opacity"
@@ -250,7 +317,9 @@ export function CategorySettings() {
                   </div>
 
                   <div>
-                    <Label htmlFor="background_blur">Background Blur (px): {formData.background_blur}</Label>
+                    <Label htmlFor="background_blur">
+                      Background Blur: {formData.background_blur}px
+                    </Label>
                     <input
                       type="range"
                       id="background_blur"
@@ -262,12 +331,12 @@ export function CategorySettings() {
                       className="w-full"
                     />
                   </div>
-                </>
+                </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-4">
                 <Button type="submit">
-                  {editingCategory ? "Update" : "Create"} Settings
+                  {editingCategory ? "Update Category" : "Create Category"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
@@ -278,57 +347,71 @@ export function CategorySettings() {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Category</TableHead>
-              <TableHead>Frame Enabled</TableHead>
-              <TableHead>Frame Image</TableHead>
-              <TableHead>Background</TableHead>
-              <TableHead>Opacity</TableHead>
-              <TableHead>Blur</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categorySettings.map((setting) => (
-              <TableRow key={setting.id}>
-                <TableCell className="font-medium">{setting.category_name}</TableCell>
-                <TableCell>{setting.frame_enabled ? "✓" : "✗"}</TableCell>
-                <TableCell className="text-xs truncate max-w-[150px]">
-                  {setting.frame_image ? (
-                    <img src={setting.frame_image} alt="Frame" className="h-8 w-8 object-cover" />
-                  ) : "None"}
-                </TableCell>
-                <TableCell className="text-xs truncate max-w-[150px]">
-                  {setting.background_image ? (
-                    <img src={setting.background_image} alt="BG" className="h-8 w-12 object-cover" />
-                  ) : "None"}
-                </TableCell>
-                <TableCell>{setting.background_opacity}</TableCell>
-                <TableCell>{setting.background_blur}px</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(setting)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(setting.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+        {categories.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No categories yet. Click "Add Category" to create one.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((category) => (
+              <Card key={category.id} className="border-2">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">{category.category_name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {category.frame_enabled ? "Custom styling enabled" : "Default styling"}
+                          {category.id.startsWith('temp-') && " • No settings yet"}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(category)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(category.id, category.category_name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {category.frame_enabled && (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Frame:</span>{" "}
+                          {category.frame_image ? (
+                            <img src={category.frame_image} alt="Frame" className="h-12 w-12 object-contain inline-block ml-2 border rounded" />
+                          ) : (
+                            "None"
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Background:</span>{" "}
+                          {category.background_image ? (
+                            <img src={category.background_image} alt="BG" className="h-12 w-16 object-cover inline-block ml-2 border rounded" />
+                          ) : (
+                            "None"
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Opacity: {(category.background_opacity * 100).toFixed(0)}% • Blur: {category.background_blur}px
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </TableCell>
-              </TableRow>
+                </CardContent>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        )}
       </CardContent>
 
       <MediaPicker

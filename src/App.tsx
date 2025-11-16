@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
+import Setup from "./pages/Setup";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/soulista.shop">
+      <BrowserRouter>
         <AuthProvider>
           <CartProvider>
             <Navigation />
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/setup" element={<Setup />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Footer />

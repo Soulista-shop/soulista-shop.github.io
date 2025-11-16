@@ -5,13 +5,53 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { sendContactMessageToTelegram } from "@/lib/telegram-contact";
 
 const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [contactInfo, setContactInfo] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      const { data } = await supabase
+        .from("contact_settings" as any)
+        .select("*");
+      
+      if (data) {
+        const info = (data as any[]).reduce((acc, item) => {
+          acc[item.setting_key] = item.setting_value;
+          return acc;
+        }, {} as Record<string, string>);
+        setContactInfo(info);
+      }
+    };
+    fetchContactInfo();
+  }, []);
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Message sent!", {
-      description: "We'll get back to you as soon as possible."
-    });
+    setSending(true);
+
+    try {
+      await sendContactMessageToTelegram(formData);
+      
+      toast.success("Message sent!", {
+        description: "We'll get back to you as soon as possible."
+      });
+
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      toast.error("Failed to send message");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -38,15 +78,34 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Your name" required />
+                  <Input 
+                    id="name" 
+                    placeholder="Your name" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your@email.com" required />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" placeholder="What's this about?" required />
+                  <Input 
+                    id="subject" 
+                    placeholder="What's this about?"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
@@ -54,11 +113,13 @@ const Contact = () => {
                     id="message"
                     placeholder="Tell us more..."
                     rows={5}
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full shadow-elegant">
-                  Send Message
+                <Button type="submit" className="w-full shadow-elegant" disabled={sending}>
+                  {sending ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </CardContent>
@@ -76,8 +137,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Email</h3>
-                    <p className="text-muted-foreground">hello@soulista.com</p>
-                    <p className="text-muted-foreground">support@soulista.com</p>
+                    <p className="text-muted-foreground">{contactInfo.email_primary || 'hello@soulista.com'}</p>
+                    <p className="text-muted-foreground">{contactInfo.email_support || 'support@soulista.com'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -93,8 +154,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Phone</h3>
-                    <p className="text-muted-foreground">+1 (555) 123-4567</p>
-                    <p className="text-sm text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
+                    <p className="text-muted-foreground">{contactInfo.phone || '+1 (555) 123-4567'}</p>
+                    <p className="text-sm text-muted-foreground">{contactInfo.phone_hours || 'Mon-Fri, 9am-6pm EST'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -111,9 +172,9 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold mb-1">Location</h3>
                     <p className="text-muted-foreground">
-                      123 Fashion Street<br />
-                      New York, NY 10001<br />
-                      United States
+                      {contactInfo.address_line1 || '123 Fashion Street'}<br />
+                      {contactInfo.address_line2 || 'New York, NY 10001'}<br />
+                      {contactInfo.address_line3 || 'United States'}
                     </p>
                   </div>
                 </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { categories } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
@@ -37,12 +36,25 @@ interface Product {
 const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
   const [categorySetting, setCategorySetting] = useState<CategorySetting | null>(null);
 
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
   }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("category_settings")
+      .select("category_name")
+      .order("category_name");
+
+    if (!error && data) {
+      setCategories(["All", ...data.map(c => c.category_name)]);
+    }
+  };
 
   useEffect(() => {
     if (selectedCategory !== "All") {

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +26,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const navigate = useNavigate();
   const [categorySetting, setCategorySetting] = useState<CategorySetting | null>(null);
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = !!product.discount_price;
@@ -49,7 +50,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const hasFrame = categorySetting?.frame_enabled;
 
   return (
-    <Link to={`/product/${String(product.id)}`}>
+    <div 
+      onClick={() => { 
+        navigate(`/product/${String(product.id)}`); 
+        window.scrollTo(0, 0); 
+      }}
+      className="cursor-pointer"
+    >
       <Card className="group overflow-visible transition-all duration-300 hover:-translate-y-1 border-border hover:shadow-elegant">
         <div className="aspect-[3/4] relative">
           {/* Product Image Container */}
@@ -68,7 +75,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Product Image */}
             <img
-              src={product.images[0]}
+              src={product.images[0] || "/placeholder.svg"}
               alt={product.name}
               loading="lazy"
               onError={(e) => {
@@ -105,6 +112,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </CardFooter>
       </Card>
-    </Link>
+    </div>
   );
 };
