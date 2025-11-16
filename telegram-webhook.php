@@ -5,8 +5,8 @@ $TELEGRAM_BOT_TOKEN = "8218756776:AAFp4Y---2ZIJfrgC8u43AROPFtk1PK3NoA";
 $SECRET_TOKEN = "soulista_secret_2024";
 
 // Get Supabase credentials from environment or config
-$SUPABASE_URL = getenv('VITE_SUPABASE_URL') ?: "https://qwcddnoieksbunyuotww.supabase.co";
-$SUPABASE_KEY = getenv('VITE_SUPABASE_PUBLISHABLE_KEY') ?: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3Y2Rkbm9pZWtzYnVueXVvdHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1NDEyNjMsImV4cCI6MjA3NzExNzI2M30.dzH1fYAfdXk3jjQi5E3YjKsG3kmsER29ZJn5CapGIwg";
+$SUPABASE_URL = getenv('VITE_SUPABASE_URL') ?: "https://ktaaodvqxiqqtlekneqj.supabase.co";
+$SUPABASE_KEY = getenv('VITE_SUPABASE_PUBLISHABLE_KEY') ?: "YOUR_NEW_ANON_KEY_HERE";
 
 // Get the update from Telegram
 $content = file_get_contents("php://input");
