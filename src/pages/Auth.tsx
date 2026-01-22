@@ -49,13 +49,9 @@ export default function Auth() {
         });
         navigate("/");
       } else {
-        const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email: validated.email,
           password: validated.password,
-          options: {
-            emailRedirectTo: redirectUrl,
-          },
         });
         
         if (error) {
