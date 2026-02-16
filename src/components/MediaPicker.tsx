@@ -156,7 +156,7 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
           </div>
 
           <ScrollArea className="h-[60vh] min-h-[280px]">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 items-start">
               {folders.map((folder) => (
                 <button
                   key={folder}
@@ -175,15 +175,15 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
                   <button
                     key={file.id}
                     onClick={() => handleSelect(file.path)}
-                    className={`relative group border rounded-lg overflow-hidden hover:border-primary transition flex flex-col ${
+                    className={`relative aspect-square w-full border rounded-lg overflow-hidden hover:border-primary transition ${
                       isSelected ? "border-primary ring-2 ring-primary" : ""
                     }`}
                   >
-                    <div className="aspect-square w-full bg-muted flex items-center justify-center p-1">
+                    <div className="absolute inset-0 bg-muted flex items-center justify-center p-1 min-w-0 min-h-0">
                       <img
                         src={url}
                         alt={file.name}
-                        className="w-full h-full object-contain"
+                        className="max-w-full max-h-full w-auto h-auto object-contain"
                       />
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate opacity-0 group-hover:opacity-100 transition">

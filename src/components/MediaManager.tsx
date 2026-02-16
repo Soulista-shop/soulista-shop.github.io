@@ -301,12 +301,12 @@ export function MediaManager() {
           <h3 className="text-sm font-semibold mb-2">Files ({files.length})</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {files.map((file) => (
-              <div key={file.id} className="group relative border rounded-lg overflow-hidden">
-                <div className="aspect-square bg-muted flex items-center justify-center p-1">
+              <div key={file.id} className="group relative border rounded-lg overflow-hidden flex flex-col">
+                <div className="aspect-square w-full bg-muted flex items-center justify-center p-1 min-h-0 shrink-0">
                   <img
                     src={getPublicUrl(file.path)}
                     alt={file.name}
-                    className="w-full h-full object-contain cursor-pointer"
+                    className="max-w-full max-h-full w-auto h-auto object-contain cursor-pointer"
                     onClick={() => setSelectedImage(getPublicUrl(file.path))}
                   />
                 </div>
