@@ -299,14 +299,14 @@ export function MediaManager() {
         {/* Files */}
         <div>
           <h3 className="text-sm font-semibold mb-2">Files ({files.length})</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {files.map((file) => (
               <div key={file.id} className="group relative border rounded-lg overflow-hidden">
-                <div className="aspect-square bg-muted">
+                <div className="aspect-square bg-muted flex items-center justify-center p-1">
                   <img
                     src={getPublicUrl(file.path)}
                     alt={file.name}
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-full object-contain cursor-pointer"
                     onClick={() => setSelectedImage(getPublicUrl(file.path))}
                   />
                 </div>

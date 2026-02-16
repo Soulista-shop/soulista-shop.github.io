@@ -116,7 +116,7 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle>Select Image from Media Library</DialogTitle>
         </DialogHeader>
@@ -155,8 +155,8 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
             </div>
           </div>
 
-          <ScrollArea className="h-[50vh]">
-            <div className="grid grid-cols-4 gap-4">
+          <ScrollArea className="h-[60vh] min-h-[280px]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
               {folders.map((folder) => (
                 <button
                   key={folder}
@@ -175,15 +175,15 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
                   <button
                     key={file.id}
                     onClick={() => handleSelect(file.path)}
-                    className={`relative group border rounded-lg overflow-hidden hover:border-primary transition ${
+                    className={`relative group border rounded-lg overflow-hidden hover:border-primary transition flex flex-col ${
                       isSelected ? "border-primary ring-2 ring-primary" : ""
                     }`}
                   >
-                    <div className="aspect-square">
+                    <div className="aspect-square w-full bg-muted flex items-center justify-center p-1">
                       <img
                         src={url}
                         alt={file.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate opacity-0 group-hover:opacity-100 transition">
