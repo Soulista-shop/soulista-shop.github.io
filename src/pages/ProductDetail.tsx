@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShoppingBag, Heart } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
@@ -34,6 +34,7 @@ interface Product {
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
@@ -143,17 +144,11 @@ const ProductDetail = () => {
       ...(selectedSize ? { size: selectedSize } : {}),
     });
     toast.success("Added to cart!", {
-      description: (
-        <span>
-          {`${product.name}${selectedSize ? ` (${selectedSize})` : ""} has been added to your cart. `}
-          <Link
-            to="/cart"
-            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
-          >
-            View cart
-          </Link>
-        </span>
-      ),
+      description: `${product.name}${selectedSize ? ` (${selectedSize})` : ""} has been added to your cart.`,
+      action: {
+        label: "View cart",
+        onClick: () => navigate("/cart"),
+      },
     });
   };
 
