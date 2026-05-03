@@ -6,7 +6,7 @@ const INSTAPAY_WEB_URL = "https://ipn.eg/S/nadasobhin/instapay/4SSLep";
 const WHATSAPP_URL = "https://wa.me/201505458957";
 const WHATSAPP_LABEL = "+20 150 5458957";
 const INSTAPAY_LOGO_SRC = "/instapay/instapay-logo.png";
-const INSTAPAY_QR_SRC = "/instapay/ipn-qr.svg";
+const qrCodeImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(INSTAPAY_APP_URL)}`;
 
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
@@ -26,17 +26,19 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 
 const Instapay = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pt-20 pb-16 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-16 px-4 pt-28 md:pt-32">
       <div className="container mx-auto max-w-4xl">
-        <header className="text-center mb-10 md:mb-14">
+        <header className="text-center mb-10 md:mb-14 scroll-mt-28">
           <div className="flex flex-col items-center gap-5">
-            <img
-              src={INSTAPAY_LOGO_SRC}
-              alt="InstaPay"
-              className="h-12 md:h-14 w-auto object-contain"
-              width={200}
-              height={56}
-            />
+            <div className="w-full flex justify-center overflow-visible py-2">
+              <img
+                src={INSTAPAY_LOGO_SRC}
+                alt="InstaPay"
+                className="max-h-14 md:max-h-[4.5rem] w-auto h-auto object-contain object-center block"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
                 Pay with InstaPay
@@ -97,9 +99,11 @@ const Instapay = () => {
             </p>
             <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-inner border border-border/60 w-full max-w-[280px]">
               <img
-                src={INSTAPAY_QR_SRC}
-                alt="InstaPay payment QR code"
-                className="w-full max-w-[240px] h-auto object-contain mx-auto"
+                src={qrCodeImageSrc}
+                alt="QR code to open this InstaPay payment in the app"
+                width={280}
+                height={280}
+                className="w-full max-w-[240px] h-auto aspect-square object-contain mx-auto"
                 loading="lazy"
                 decoding="async"
               />
