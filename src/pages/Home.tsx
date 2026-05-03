@@ -22,6 +22,19 @@ const Home = () => {
   const { getContent } = useContent();
   const navigate = useNavigate();
 
+  const featuredTitle = getContent(
+    "featured_section_title",
+    "Featured Pieces",
+    "text-3xl md:text-4xl",
+    "font-bold"
+  );
+  const featuredDescription = getContent(
+    "featured_section_description",
+    "Meet your go-to summer outfits—colorful, comfy, and made for every summer moment.",
+    "text-base",
+    "font-sans"
+  );
+
   useEffect(() => {
     const fetchFeatured = async () => {
       setLoading(true);
@@ -84,9 +97,9 @@ const Home = () => {
       <section className="py-4 md:py-6">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Pieces</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Carefully curated styles that embody modern elegance
+            <h2 className={`${featuredTitle.className} mb-4 text-foreground`}>{featuredTitle.text}</h2>
+            <p className={`${featuredDescription.className} text-muted-foreground max-w-2xl mx-auto`}>
+              {featuredDescription.text}
             </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">

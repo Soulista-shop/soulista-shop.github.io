@@ -19,6 +19,8 @@ interface ContentSetting {
 const sectionLabels: Record<string, string> = {
   hero_slogan: "Hero Slogan (Your Style, Your Soul)",
   hero_description: "Hero Description",
+  featured_section_title: "Home — Featured block title (e.g. Featured Pieces, Best sellers)",
+  featured_section_description: "Home — Featured block description (under the title)",
   about_title: "About Page Title",
   about_description: "About Page Description",
   mission_title: "Mission Title",
