@@ -1,5 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -8,9 +26,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Package, Settings, Upload, Truck } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Settings, Upload, Truck, GripVertical, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategorySettings } from "@/components/CategorySettings";
@@ -38,6 +55,84 @@ interface Product {
 }
 
 const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+
+function SortableProductRow({
+  product,
+  onEdit,
+  onDelete,
+}: {
+  product: Product;
+  onEdit: (p: Product) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: product.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.92 : 1,
+    zIndex: isDragging ? 2 : undefined,
+    position: "relative" as const,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2 sm:gap-3 sm:p-3"
+    >
+      <button
+        type="button"
+        className="flex h-11 w-10 shrink-0 touch-none items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground hover:bg-muted active:cursor-grabbing sm:h-10 sm:w-9"
+        aria-label={`Drag to reorder ${product.name}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5 shrink-0" aria-hidden />
+      </button>
+      <img src={product.main_image} alt="" className="h-12 w-12 shrink-0 rounded object-cover sm:h-14 sm:w-14" />
+      <div className="min-w-0 flex-1 basis-[min(100%,12rem)] sm:basis-48">
+        <div className="truncate font-medium leading-tight">{product.name}</div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground sm:text-sm">
+          <span>{product.category}</span>
+          <span className="tabular-nums">
+            {product.discount_price ? (
+              <>
+                <span className="line-through">{product.price}</span>{" "}
+                <span className="font-semibold text-primary">{product.discount_price} LE</span>
+              </>
+            ) : (
+              <span>{product.price} LE</span>
+            )}
+          </span>
+          <span className="hidden sm:inline">
+            {product.out_of_stock ? (
+              <span className="font-medium text-destructive">Out of stock</span>
+            ) : product.almost_sold_out ? (
+              <span className="font-medium text-amber-700 dark:text-amber-400">Low stock</span>
+            ) : (
+              <span>In stock</span>
+            )}
+          </span>
+          {product.featured ? (
+            <Star className="inline h-3.5 w-3.5 fill-amber-400 text-amber-500" aria-label="Featured" />
+          ) : null}
+          <span className="tabular-nums">#{product.sort_order ?? 0}</span>
+        </div>
+      </div>
+      <div className="ml-auto flex shrink-0 gap-2">
+        <Button variant="outline" size="sm" type="button" onClick={() => onEdit(product)}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="destructive" size="sm" type="button" onClick={() => onDelete(product.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 interface Order {
   id: string;
@@ -85,6 +180,11 @@ export default function Admin() {
   });
   const [newSizeInput, setNewSizeInput] = useState("");
 
+  const productSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -117,13 +217,44 @@ export default function Admin() {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setProducts(data || []);
     }
+  };
+
+  const persistProductSortOrder = async (ordered: Product[]) => {
+    try {
+      const results = await Promise.all(
+        ordered.map((row, index) =>
+          supabase.from("products").update({ sort_order: index }).eq("id", row.id)
+        )
+      );
+      const err = results.find((r) => r.error)?.error;
+      if (err) throw err;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to save order";
+      toast({ title: "Error", description: message, variant: "destructive" });
+      fetchProducts();
+    }
+  };
+
+  const handleProductDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = products.findIndex((i) => i.id === active.id);
+    const newIndex = products.findIndex((i) => i.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(products, oldIndex, newIndex).map((p, index) => ({
+      ...p,
+      sort_order: index,
+    }));
+    setProducts(next);
+    await persistProductSortOrder(next);
   };
 
   const fetchOrders = async () => {
@@ -220,6 +351,9 @@ export default function Admin() {
       )
     );
 
+    const nextSortOrder =
+      products.length === 0 ? 0 : Math.max(...products.map((p) => p.sort_order ?? 0), -1) + 1;
+
     const productData = {
       name: formData.name,
       category: formData.category,
@@ -229,7 +363,7 @@ export default function Admin() {
       main_image: formData.main_image || allImages[0] || '',
       images: allImages,
       featured: formData.featured,
-      sort_order: formData.sort_order,
+      sort_order: editingProduct ? formData.sort_order : nextSortOrder,
       out_of_stock: formData.out_of_stock,
       almost_sold_out: formData.almost_sold_out,
       sizes: normalizedSizes,
@@ -508,15 +642,21 @@ export default function Admin() {
                         <Label htmlFor="featured">Featured Product</Label>
                       </div>
                       <div>
-                        <Label htmlFor="sort_order">Sort Order</Label>
+                        <Label htmlFor="sort_order">Sort order (manual)</Label>
                         <Input
                           id="sort_order"
                           type="number"
                           value={formData.sort_order}
                           onChange={(e) =>
-                            setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })
+                            setFormData({ ...formData, sort_order: parseInt(e.target.value, 10) || 0 })
                           }
+                          disabled={!editingProduct}
                         />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {editingProduct
+                            ? "Optional override. You can also drag rows in the product list to set order."
+                            : "New products are added at the end. Reorder with drag and drop in the list."}
+                        </p>
                       </div>
                     </div>
 
@@ -714,74 +854,35 @@ export default function Admin() {
               </Dialog>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead className="hidden md:table-cell">Stock</TableHead>
-                    <TableHead>Featured</TableHead>
-                    <TableHead className="hidden sm:table-cell">Sort</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <img
-                          src={product.main_image}
-                          alt={product.name}
-                          className="w-16 h-16 object-cover rounded"
+              <p className="mb-3 text-sm text-muted-foreground">
+                Drag the handle on each row to change storefront order (same as shop listing). Order is saved
+                when you drop a row.
+              </p>
+              {products.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No products yet.</p>
+              ) : (
+                <DndContext
+                  sensors={productSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleProductDragEnd}
+                >
+                  <SortableContext
+                    items={products.map((p) => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {products.map((product) => (
+                        <SortableProductRow
+                          key={product.id}
+                          product={product}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                        {product.discount_price ? (
-                          <>
-                            <span className="line-through text-muted-foreground mr-2">{product.price} LE</span>
-                            <span className="text-primary font-semibold">{product.discount_price} LE</span>
-                          </>
-                        ) : (
-                          <span>{product.price} LE</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                        {product.out_of_stock ? (
-                          <span className="text-destructive font-medium">Out</span>
-                        ) : product.almost_sold_out ? (
-                          <span className="text-amber-700 dark:text-amber-400 font-medium">Low</span>
-                        ) : (
-                          "OK"
-                        )}
-                      </TableCell>
-                      <TableCell>{product.featured ? "⭐" : ""}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{product.sort_order}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(product)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
             </CardContent>
           </Card>
         )}
