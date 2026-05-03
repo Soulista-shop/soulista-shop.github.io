@@ -19,8 +19,7 @@ interface ContentSetting {
 const sectionLabels: Record<string, string> = {
   hero_slogan: "Hero Slogan (Your Style, Your Soul)",
   hero_description: "Hero Description",
-  featured_section_title: "Home — Featured block title (e.g. Featured Pieces, Best sellers)",
-  featured_section_description: "Home — Featured block description (under the title)",
+  featured_section_title: "Home — Featured block",
   about_title: "About Page Title",
   about_description: "About Page Description",
   mission_title: "Mission Title",
@@ -165,6 +164,41 @@ export function ContentSettings() {
     setSaving(null);
   };
 
+  const handleUpdateFeaturedHomeBlock = async () => {
+    const titleS = settings.find((s) => s.section === "featured_section_title");
+    const descS = settings.find((s) => s.section === "featured_section_description");
+    if (!titleS || !descS) return;
+
+    setSaving("featured-home-block");
+    const payload = (s: ContentSetting) => ({
+      text_content: s.text_content,
+      font_size: s.font_size,
+      font_family: s.font_family,
+      updated_at: new Date().toISOString(),
+    });
+
+    const { error: e1 } = await supabase
+      .from("content_settings" as any)
+      .update(payload(titleS))
+      .eq("id", titleS.id);
+    if (e1) {
+      toast({ title: "Error", description: e1.message, variant: "destructive" });
+      setSaving(null);
+      return;
+    }
+
+    const { error: e2 } = await supabase
+      .from("content_settings" as any)
+      .update(payload(descS))
+      .eq("id", descS.id);
+    if (e2) {
+      toast({ title: "Error", description: e2.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Featured block updated successfully" });
+    }
+    setSaving(null);
+  };
+
   const updateSetting = (id: string, field: keyof ContentSetting, value: string) => {
     setSettings(
       settings.map((s) => (s.id === id ? { ...s, [field]: value } : s))
@@ -250,103 +284,249 @@ export function ContentSettings() {
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {settings.map((setting) => (
-            <Card key={setting.id} className="border-2">
-              <CardContent className="pt-6 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">
-                    {sectionLabels[setting.section] || setting.section}
-                  </h3>
-                </div>
+          {settings
+            .filter((s) => s.section !== "featured_section_description")
+            .map((setting) => {
+              if (setting.section === "featured_section_title") {
+                const descS = settings.find((s) => s.section === "featured_section_description");
+                if (!descS) {
+                  return (
+                    <Card key={setting.id} className="border-2">
+                      <CardContent className="pt-6 text-sm text-muted-foreground">
+                        Run the latest database migrations so the featured block description row exists, then
+                        reload this page.
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                return (
+                  <Card key="featured-home-block" className="border-2">
+                    <CardContent className="pt-6 space-y-6">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-1">
+                          {sectionLabels.featured_section_title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Title and description for the featured products section on the home page.
+                        </p>
+                      </div>
 
-                <div>
-                  <Label htmlFor={`text-${setting.id}`}>
-                    {setting.section === 'logo_size' ? 'Logo Size (height in pixels)' : 'Text Content'}
-                  </Label>
-                  {setting.section === 'logo_size' ? (
-                    <Input
-                      id={`text-${setting.id}`}
-                      type="number"
-                      value={setting.text_content}
-                      onChange={(e) =>
-                        updateSetting(setting.id, "text_content", e.target.value)
-                      }
-                      className="mt-1"
-                      placeholder="16"
-                    />
-                  ) : setting.section.includes("description") ? (
-                    <Textarea
-                      id={`text-${setting.id}`}
-                      value={setting.text_content}
-                      onChange={(e) =>
-                        updateSetting(setting.id, "text_content", e.target.value)
-                      }
-                      rows={4}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <Input
-                      id={`text-${setting.id}`}
-                      value={setting.text_content}
-                      onChange={(e) =>
-                        updateSetting(setting.id, "text_content", e.target.value)
-                      }
-                      className="mt-1"
-                    />
-                  )}
-                </div>
+                      <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                        <p className="text-sm font-medium">Title</p>
+                        <div>
+                          <Label htmlFor={`text-${setting.id}`}>Text (e.g. Featured Pieces, Best sellers)</Label>
+                          <Input
+                            id={`text-${setting.id}`}
+                            value={setting.text_content}
+                            onChange={(e) =>
+                              updateSetting(setting.id, "text_content", e.target.value)
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`size-${setting.id}`}>Font size</Label>
+                            <select
+                              id={`size-${setting.id}`}
+                              value={setting.font_size}
+                              onChange={(e) =>
+                                updateSetting(setting.id, "font_size", e.target.value)
+                              }
+                              className="w-full border rounded-md p-2 bg-background mt-1"
+                            >
+                              {fontSizeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <Label htmlFor={`font-${setting.id}`}>Font style</Label>
+                            <select
+                              id={`font-${setting.id}`}
+                              value={setting.font_family}
+                              onChange={(e) =>
+                                updateSetting(setting.id, "font_family", e.target.value)
+                              }
+                              className="w-full border rounded-md p-2 bg-background mt-1"
+                            >
+                              {customFonts.map((font) => (
+                                <option key={font.id} value={font.font_class}>
+                                  {font.font_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor={`size-${setting.id}`}>Font Size</Label>
-                    <select
-                      id={`size-${setting.id}`}
-                      value={setting.font_size}
-                      onChange={(e) =>
-                        updateSetting(setting.id, "font_size", e.target.value)
-                      }
-                      className="w-full border rounded-md p-2 bg-background mt-1"
-                    >
-                      {fontSizeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                        <p className="text-sm font-medium">Description (under the title)</p>
+                        <div>
+                          <Label htmlFor={`text-${descS.id}`}>Text</Label>
+                          <Textarea
+                            id={`text-${descS.id}`}
+                            value={descS.text_content}
+                            onChange={(e) =>
+                              updateSetting(descS.id, "text_content", e.target.value)
+                            }
+                            rows={4}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`size-${descS.id}`}>Font size</Label>
+                            <select
+                              id={`size-${descS.id}`}
+                              value={descS.font_size}
+                              onChange={(e) =>
+                                updateSetting(descS.id, "font_size", e.target.value)
+                              }
+                              className="w-full border rounded-md p-2 bg-background mt-1"
+                            >
+                              {fontSizeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <Label htmlFor={`font-${descS.id}`}>Font style</Label>
+                            <select
+                              id={`font-${descS.id}`}
+                              value={descS.font_family}
+                              onChange={(e) =>
+                                updateSetting(descS.id, "font_family", e.target.value)
+                              }
+                              className="w-full border rounded-md p-2 bg-background mt-1"
+                            >
+                              {customFonts.map((font) => (
+                                <option key={font.id} value={font.font_class}>
+                                  {font.font_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                  <div>
-                    <Label htmlFor={`font-${setting.id}`}>Font Style</Label>
-                    <select
-                      id={`font-${setting.id}`}
-                      value={setting.font_family}
-                      onChange={(e) =>
-                        updateSetting(setting.id, "font_family", e.target.value)
-                      }
-                      className="w-full border rounded-md p-2 bg-background mt-1"
-                    >
-                      {customFonts.map((font) => (
-                        <option key={font.id} value={font.font_class}>
-                          {font.font_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                      <div className="pt-0">
+                        <Button
+                          onClick={() => void handleUpdateFeaturedHomeBlock()}
+                          disabled={saving === "featured-home-block"}
+                          size="sm"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          {saving === "featured-home-block" ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
 
-                <div className="pt-2">
-                  <Button
-                    onClick={() => handleUpdate(setting)}
-                    disabled={saving === setting.id}
-                    size="sm"
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {saving === setting.id ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              return (
+                <Card key={setting.id} className="border-2">
+                  <CardContent className="pt-6 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-4">
+                        {sectionLabels[setting.section] || setting.section}
+                      </h3>
+                    </div>
+
+                    <div>
+                      <Label htmlFor={`text-${setting.id}`}>
+                        {setting.section === "logo_size" ? "Logo Size (height in pixels)" : "Text Content"}
+                      </Label>
+                      {setting.section === "logo_size" ? (
+                        <Input
+                          id={`text-${setting.id}`}
+                          type="number"
+                          value={setting.text_content}
+                          onChange={(e) =>
+                            updateSetting(setting.id, "text_content", e.target.value)
+                          }
+                          className="mt-1"
+                          placeholder="16"
+                        />
+                      ) : setting.section.includes("description") ? (
+                        <Textarea
+                          id={`text-${setting.id}`}
+                          value={setting.text_content}
+                          onChange={(e) =>
+                            updateSetting(setting.id, "text_content", e.target.value)
+                          }
+                          rows={4}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <Input
+                          id={`text-${setting.id}`}
+                          value={setting.text_content}
+                          onChange={(e) =>
+                            updateSetting(setting.id, "text_content", e.target.value)
+                          }
+                          className="mt-1"
+                        />
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`size-${setting.id}`}>Font Size</Label>
+                        <select
+                          id={`size-${setting.id}`}
+                          value={setting.font_size}
+                          onChange={(e) =>
+                            updateSetting(setting.id, "font_size", e.target.value)
+                          }
+                          className="w-full border rounded-md p-2 bg-background mt-1"
+                        >
+                          {fontSizeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`font-${setting.id}`}>Font Style</Label>
+                        <select
+                          id={`font-${setting.id}`}
+                          value={setting.font_family}
+                          onChange={(e) =>
+                            updateSetting(setting.id, "font_family", e.target.value)
+                          }
+                          className="w-full border rounded-md p-2 bg-background mt-1"
+                        >
+                          {customFonts.map((font) => (
+                            <option key={font.id} value={font.font_class}>
+                              {font.font_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        onClick={() => handleUpdate(setting)}
+                        disabled={saving === setting.id}
+                        size="sm"
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        {saving === setting.id ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
         </CardContent>
       </Card>
     </div>
