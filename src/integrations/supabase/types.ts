@@ -124,6 +124,7 @@ export type Database = {
       }
       products: {
         Row: {
+          almost_sold_out: boolean
           category: string
           created_at: string | null
           description: string | null
@@ -133,11 +134,14 @@ export type Database = {
           images: string[] | null
           main_image: string | null
           name: string
+          out_of_stock: boolean
           price: number
+          sizes: string[]
           sort_order: number | null
           updated_at: string | null
         }
         Insert: {
+          almost_sold_out?: boolean
           category: string
           created_at?: string | null
           description?: string | null
@@ -147,11 +151,14 @@ export type Database = {
           images?: string[] | null
           main_image?: string | null
           name: string
+          out_of_stock?: boolean
           price: number
+          sizes?: string[]
           sort_order?: number | null
           updated_at?: string | null
         }
         Update: {
+          almost_sold_out?: boolean
           category?: string
           created_at?: string | null
           description?: string | null
@@ -161,7 +168,9 @@ export type Database = {
           images?: string[] | null
           main_image?: string | null
           name?: string
+          out_of_stock?: boolean
           price?: number
+          sizes?: string[]
           sort_order?: number | null
           updated_at?: string | null
         }

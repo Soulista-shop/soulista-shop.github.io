@@ -31,7 +31,12 @@ interface Product {
   images: string[];
   featured?: boolean;
   sort_order?: number;
+  out_of_stock?: boolean;
+  almost_sold_out?: boolean;
+  sizes?: string[] | null;
 }
+
+const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 interface Order {
   id: string;
@@ -71,7 +76,11 @@ export default function Admin() {
     images: [] as string[],
     featured: false,
     sort_order: 0,
+    out_of_stock: false,
+    almost_sold_out: false,
+    sizes: [] as string[],
   });
+  const [newSizeInput, setNewSizeInput] = useState("");
 
 
   useEffect(() => {
@@ -199,6 +208,14 @@ export default function Admin() {
       ? [formData.main_image, ...formData.images.filter(img => img !== formData.main_image)]
       : formData.images;
 
+    const normalizedSizes = Array.from(
+      new Set(
+        formData.sizes
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+      )
+    );
+
     const productData = {
       name: formData.name,
       category: formData.category,
@@ -209,6 +226,9 @@ export default function Admin() {
       images: allImages,
       featured: formData.featured,
       sort_order: formData.sort_order,
+      out_of_stock: formData.out_of_stock,
+      almost_sold_out: formData.almost_sold_out,
+      sizes: normalizedSizes,
     };
 
     if (editingProduct) {
@@ -265,8 +285,28 @@ export default function Admin() {
       images: galleryImages,
       featured: product.featured || false,
       sort_order: product.sort_order || 0,
+      out_of_stock: !!product.out_of_stock,
+      almost_sold_out: !!product.almost_sold_out,
+      sizes: Array.isArray(product.sizes) ? [...product.sizes] : [],
     });
+    setNewSizeInput("");
     setIsProductDialogOpen(true);
+  };
+
+  const addCustomSize = () => {
+    const v = newSizeInput.trim();
+    if (!v) return;
+    if (formData.sizes.some((s) => s.toLowerCase() === v.toLowerCase())) {
+      setNewSizeInput("");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, v] }));
+    setNewSizeInput("");
+  };
+
+  const addPresetSize = (preset: string) => {
+    if (formData.sizes.includes(preset)) return;
+    setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, preset] }));
   };
 
   const resetForm = () => {
@@ -280,7 +320,11 @@ export default function Admin() {
       images: [],
       featured: false,
       sort_order: 0,
+      out_of_stock: false,
+      almost_sold_out: false,
+      sizes: [],
     });
+    setNewSizeInput("");
     setEditingProduct(null);
     setIsProductDialogOpen(false);
   };
@@ -441,7 +485,7 @@ export default function Admin() {
                         rows={3}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="featured"
@@ -464,6 +508,125 @@ export default function Admin() {
                         />
                       </div>
                     </div>
+
+                    <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+                      <p className="text-sm font-medium">Stock on storefront</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-start gap-3 rounded-md border bg-background p-3">
+                          <Checkbox
+                            id="out_of_stock"
+                            checked={formData.out_of_stock}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                out_of_stock: checked as boolean,
+                                almost_sold_out: checked ? false : formData.almost_sold_out,
+                              })
+                            }
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <Label htmlFor="out_of_stock" className="cursor-pointer">
+                              Out of stock
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Hides purchase; shows sold-out badge on the product.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 rounded-md border bg-background p-3">
+                          <Checkbox
+                            id="almost_sold_out"
+                            checked={formData.almost_sold_out}
+                            disabled={formData.out_of_stock}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, almost_sold_out: checked as boolean })
+                            }
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <Label htmlFor="almost_sold_out" className="cursor-pointer">
+                              Almost sold out!
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Urgency badge; not shown when out of stock.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                      <div>
+                        <Label>Sizes</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Leave empty for one-size items. If you add sizes, customers must pick one before checkout.
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          value={newSizeInput}
+                          onChange={(e) => setNewSizeInput(e.target.value)}
+                          placeholder="e.g. 38, EU 40, One size"
+                          className="flex-1 min-h-11"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomSize();
+                            }
+                          }}
+                        />
+                        <Button type="button" variant="secondary" className="min-h-11 shrink-0" onClick={addCustomSize}>
+                          Add size
+                        </Button>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Quick add</p>
+                        <div className="flex flex-wrap gap-2">
+                          {SIZE_PRESETS.map((preset) => (
+                            <Button
+                              key={preset}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="min-h-10 min-w-10 touch-manipulation"
+                              disabled={formData.sizes.includes(preset)}
+                              onClick={() => addPresetSize(preset)}
+                            >
+                              {preset}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      {formData.sizes.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {formData.sizes.map((size) => (
+                            <span
+                              key={size}
+                              className="inline-flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-sm"
+                            >
+                              {size}
+                              <button
+                                type="button"
+                                className="rounded-full p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
+                                aria-label={`Remove size ${size}`}
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    sizes: prev.sizes.filter((s) => s !== size),
+                                  }))
+                                }
+                              >
+                                <span className="text-xs leading-none px-0.5">x</span>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No sizes added yet.</p>
+                      )}
+                    </div>
+
                     <div>
                       <Label>Main Image</Label>
                       <div className="space-y-2">
@@ -547,8 +710,9 @@ export default function Admin() {
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead className="hidden md:table-cell">Stock</TableHead>
                     <TableHead>Featured</TableHead>
-                    <TableHead>Sort</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sort</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -574,8 +738,17 @@ export default function Admin() {
                           <span>{product.price} LE</span>
                         )}
                       </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        {product.out_of_stock ? (
+                          <span className="text-destructive font-medium">Out</span>
+                        ) : product.almost_sold_out ? (
+                          <span className="text-amber-700 dark:text-amber-400 font-medium">Low</span>
+                        ) : (
+                          "OK"
+                        )}
+                      </TableCell>
                       <TableCell>{product.featured ? "⭐" : ""}</TableCell>
-                      <TableCell>{product.sort_order}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{product.sort_order}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button
@@ -650,11 +823,15 @@ export default function Admin() {
                         <p className="text-sm text-muted-foreground mb-2">Items</p>
                         <div className="space-y-2">
                           {order.items.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between text-sm">
-                              <span>
-                                {item.name} x{item.quantity}
+                            <div key={idx} className="flex justify-between gap-2 text-sm">
+                              <span className="min-w-0">
+                                {item.name}
+                                {item.size ? (
+                                  <span className="text-muted-foreground"> ({item.size})</span>
+                                ) : null}{" "}
+                                x{item.quantity}
                               </span>
-                              <span>{item.price * item.quantity} LE</span>
+                              <span className="shrink-0">{item.price * item.quantity} LE</span>
                             </div>
                           ))}
                         </div>

@@ -31,6 +31,9 @@ interface Product {
   description: string;
   main_image: string;
   images: string[];
+  out_of_stock?: boolean;
+  almost_sold_out?: boolean;
+  sizes?: string[] | null;
 }
 
 const Shop = () => {
@@ -150,6 +153,9 @@ const Shop = () => {
                     discount_price: product.discount_price ? Number(product.discount_price) : undefined,
                     images: (product.images && product.images.length > 0 ? product.images : [product.main_image]).map(resolveImage).filter(Boolean) as string[],
                     description: product.description,
+                    out_of_stock: product.out_of_stock,
+                    almost_sold_out: product.almost_sold_out,
+                    sizes: product.sizes,
                   }} 
                 />
               ))}

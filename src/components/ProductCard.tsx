@@ -11,6 +11,9 @@ interface MinimalProduct {
   discount_price?: number;
   images: string[];
   description: string;
+  out_of_stock?: boolean;
+  almost_sold_out?: boolean;
+  sizes?: string[] | null;
 }
 
 interface CategorySetting {
@@ -96,10 +99,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               }}
             />
           )}
+
+          {product.out_of_stock ? (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-md bg-white/95 text-foreground text-xs font-semibold shadow-md border border-border/60 pointer-events-none">
+              Out of stock
+            </div>
+          ) : product.almost_sold_out ? (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-md bg-white/95 text-foreground text-xs font-semibold shadow-md border border-border/60 pointer-events-none">
+              Almost sold out!
+            </div>
+          ) : null}
         </div>
         <CardContent className="p-4">
           <p className="text-xs text-muted-foreground mb-1">{product.category}</p>
           <h3 className="font-semibold text-base mb-2 line-clamp-1">{product.name}</h3>
+          {product.sizes && product.sizes.length > 0 ? (
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              Sizes: {product.sizes.join(", ")}
+            </p>
+          ) : null}
         </CardContent>
         <CardFooter className="p-4 pt-0">
           {hasDiscount ? (

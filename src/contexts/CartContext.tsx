@@ -6,13 +6,18 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  size?: string;
+}
+
+export function cartLineKey(item: { id: string; size?: string }) {
+  return `${item.id}__${item.size ?? ""}`;
 }
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: Omit<CartItem, "quantity">) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (id: string, size?: string) => void;
+  updateQuantity: (id: string, quantity: number, size?: string) => void;
   clearCart: () => void;
   total: number;
   itemCount: number;
@@ -39,7 +44,13 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved) as CartItem[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -48,27 +59,32 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
     setItems((current) => {
-      const existing = current.find((i) => i.id === item.id);
+      const key = cartLineKey(item);
+      const existing = current.find((i) => cartLineKey(i) === key);
       if (existing) {
         return current.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          cartLineKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [...current, { ...item, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
+  const removeFromCart = (id: string, size?: string) => {
+    const key = cartLineKey({ id, size });
+    setItems((current) => current.filter((item) => cartLineKey(item) !== key));
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number, size?: string) => {
+    const key = cartLineKey({ id, size });
     if (quantity <= 0) {
-      removeFromCart(id);
+      setItems((current) => current.filter((item) => cartLineKey(item) !== key));
       return;
     }
     setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, quantity } : item))
+      current.map((item) =>
+        cartLineKey(item) === key ? { ...item, quantity } : item
+      )
     );
   };
 

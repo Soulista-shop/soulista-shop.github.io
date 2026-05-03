@@ -39,6 +39,9 @@ const Home = () => {
         discount_price: p.discount_price ? Number(p.discount_price) : undefined,
         images: ((p.images && p.images.length > 0) ? p.images : [p.main_image]).map(resolveImage).filter(Boolean) as string[],
         description: p.description,
+        out_of_stock: p.out_of_stock,
+        almost_sold_out: p.almost_sold_out,
+        sizes: p.sizes,
       })));
       setLoading(false);
     };

@@ -41,7 +41,13 @@ export default function Auth() {
           password: validated.password,
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Login error:', error);
+          if (error.message.includes('email not confirmed')) {
+            throw new Error('Email confirmation is still enabled in Supabase. Please disable it in your Supabase dashboard under Authentication > Settings.');
+          }
+          throw error;
+        }
         
         toast({
           title: "Success",
@@ -55,8 +61,12 @@ export default function Auth() {
         });
         
         if (error) {
+          console.error('Signup error:', error);
           if (error.message.includes("already registered")) {
             throw new Error("This email is already registered. Please login instead.");
+          }
+          if (error.message.includes('email not confirmed')) {
+            throw new Error('Email confirmation is enabled in Supabase. Please disable it in your Supabase dashboard under Authentication > Settings.');
           }
           throw error;
         }

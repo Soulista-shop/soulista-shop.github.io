@@ -7,6 +7,7 @@ interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  size?: string;
 }
 
 interface OrderData {
@@ -49,10 +50,10 @@ export async function sendOrderToTelegram(orderData: OrderData): Promise<void> {
 
     // Format the order message
     const itemsList = orderData.items
-      .map(
-        (item) =>
-          `• ${item.name}\n  Quantity: ${item.quantity}\n  Price: ${item.price} LE\n  Subtotal: ${item.price * item.quantity} LE`
-      )
+      .map((item) => {
+        const sizeLine = item.size ? `\n  Size: ${item.size}` : "";
+        return `• ${item.name}${sizeLine}\n  Quantity: ${item.quantity}\n  Price: ${item.price} LE\n  Subtotal: ${item.price * item.quantity} LE`;
+      })
       .join("\n\n");
 
     const message = `

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, cartLineKey } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,7 @@ export default function Cart() {
           name: item.name,
           price: item.price,
           quantity: item.quantity,
+          ...(item.size ? { size: item.size } : {}),
         })),
         total_amount: total,
         payment_method: "cash_on_delivery",
@@ -102,37 +103,40 @@ export default function Cart() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <Card key={item.id}>
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
+              <Card key={cartLineKey(item)}>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex gap-3 sm:gap-4">
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-24 h-24 object-cover rounded-lg"
+                      className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 object-cover rounded-lg"
                     />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
+                      {item.size ? (
+                        <p className="text-sm text-muted-foreground mt-0.5">Size: {item.size}</p>
+                      ) : null}
                       <p className="text-lg font-bold mt-1">{item.price} LE</p>
-                      <div className="flex items-center gap-2 mt-4">
+                      <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-4">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <span className="w-12 text-center">{item.quantity}</span>
+                        <span className="w-10 sm:w-12 text-center tabular-nums">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeFromCart(item.id, item.size)}
                           className="ml-auto"
                         >
                           <Trash2 className="h-4 w-4" />
