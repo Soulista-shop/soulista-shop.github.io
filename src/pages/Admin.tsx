@@ -142,6 +142,8 @@ interface Order {
   customer_address: string;
   items: any;
   total_amount: number;
+  shipping_place_name?: string;
+  shipping_fee_le?: number;
   status: string;
   created_at: string;
 }
@@ -907,7 +909,14 @@ export default function Admin() {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Order Details</p>
-                          <p className="font-medium">Total: {order.total_amount} LE</p>
+                          <p className="font-medium">Total: {Number(order.total_amount).toFixed(2)} LE</p>
+                          {(Number(order.shipping_fee_le) > 0 || order.shipping_place_name) && (
+                            <p className="text-sm text-muted-foreground">
+                              Shipping
+                              {order.shipping_place_name ? ` (${order.shipping_place_name})` : ""}:{" "}
+                              {Number(order.shipping_fee_le ?? 0).toFixed(2)} LE
+                            </p>
+                          )}
                           <p className="text-sm">
                             Date: {new Date(order.created_at).toLocaleDateString()}
                           </p>

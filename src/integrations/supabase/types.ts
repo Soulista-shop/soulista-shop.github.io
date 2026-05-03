@@ -93,6 +93,8 @@ export type Database = {
           id: string
           items: Json
           payment_method: string | null
+          shipping_fee_le: number
+          shipping_place_name: string
           status: string | null
           total_amount: number
           updated_at: string | null
@@ -106,6 +108,8 @@ export type Database = {
           id?: string
           items: Json
           payment_method?: string | null
+          shipping_fee_le?: number
+          shipping_place_name?: string
           status?: string | null
           total_amount: number
           updated_at?: string | null
@@ -119,6 +123,8 @@ export type Database = {
           id?: string
           items?: Json
           payment_method?: string | null
+          shipping_fee_le?: number
+          shipping_place_name?: string
           status?: string | null
           total_amount?: number
           updated_at?: string | null

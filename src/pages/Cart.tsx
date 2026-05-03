@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart, cartLineKey } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { useShippingDestinations } from "@/hooks/useShippingDestinations";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
@@ -26,9 +34,15 @@ type CheckoutPaymentMethod = "cash_on_delivery" | "instapay";
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, clearCart, total } = useCart();
   const navigate = useNavigate();
+  const {
+    data: shippingRows = [],
+    isLoading: shippingLoading,
+    isError: shippingError,
+  } = useShippingDestinations();
   const [isCheckout, setIsCheckout] = useState(false);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>("cash_on_delivery");
+  const [shippingDestinationId, setShippingDestinationId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,12 +50,51 @@ export default function Cart() {
     address: "",
   });
 
+  const selectedShipping = useMemo(
+    () => shippingRows.find((r) => r.id === shippingDestinationId),
+    [shippingRows, shippingDestinationId]
+  );
+
+  const shippingFee = useMemo(
+    () => (selectedShipping ? Number(selectedShipping.price_le) : 0),
+    [selectedShipping]
+  );
+
+  const shippingReady = !shippingLoading && !shippingError && shippingRows.length > 0;
+
+  const grandTotal = useMemo(
+    () => Number((total + shippingFee).toFixed(2)),
+    [total, shippingFee]
+  );
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const validated = checkoutSchema.parse(formData);
+
+      if (!shippingReady) {
+        toast({
+          title: "Shipping not available",
+          description:
+            "At least one shipping zone must exist in Admin (Shipping) before checkout. Try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!shippingDestinationId || !selectedShipping) {
+        toast({
+          title: "Delivery area required",
+          description: "Select your delivery area so we can calculate shipping and complete your order.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const shippingPlaceName = selectedShipping.place_name;
+      const shippingFeeLe = shippingFee;
 
       const orderData = {
         customer_name: validated.name,
@@ -55,7 +108,9 @@ export default function Cart() {
           quantity: item.quantity,
           ...(item.size ? { size: item.size } : {}),
         })),
-        total_amount: total,
+        shipping_place_name: shippingPlaceName,
+        shipping_fee_le: shippingFeeLe,
+        total_amount: grandTotal,
         payment_method: paymentMethod,
         status: "pending",
       };
@@ -171,19 +226,38 @@ export default function Cart() {
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{total.toFixed(2)} LE</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal (items)</span>
+                  <span className="tabular-nums font-medium">{total.toFixed(2)} LE</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Choose how you will pay at checkout. InstaPay opens the payment page after your order is
-                  saved.
-                </p>
+                {!isCheckout ? (
+                  <>
+                    {shippingLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading shipping zones…</p>
+                    ) : shippingError ? (
+                      <p className="text-sm text-destructive">
+                        Could not load shipping zones. Refresh the page or try again later.
+                      </p>
+                    ) : !shippingReady ? (
+                      <p className="text-sm text-destructive">
+                        Checkout needs at least one shipping zone. Add them in Admin, then Shipping, then return
+                        here.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        At checkout you must choose a delivery area (shipping is always included in your total),
+                        then pick payment. InstaPay opens only if you select it.
+                      </p>
+                    )}
+                  </>
+                ) : null}
                 {!isCheckout ? (
                   <Button
                     className="w-full"
+                    disabled={!shippingReady}
                     onClick={() => {
                       setPaymentMethod("cash_on_delivery");
+                      setShippingDestinationId("");
                       setIsCheckout(true);
                     }}
                   >
@@ -191,6 +265,58 @@ export default function Cart() {
                   </Button>
                 ) : (
                   <form onSubmit={handleCheckout} className="space-y-4">
+                    <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal (items)</span>
+                        <span className="tabular-nums font-medium">{total.toFixed(2)} LE</span>
+                      </div>
+                      {shippingLoading ? (
+                        <p className="text-xs text-muted-foreground">Loading shipping zones…</p>
+                      ) : shippingError || !shippingReady ? (
+                        <p className="text-xs text-destructive">
+                          Shipping zones are required but could not be loaded. Go back and refresh, or ask the
+                          shop to add zones in Admin &gt; Shipping.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label htmlFor="shipping-area">
+                            Delivery area (shipping) <span className="text-destructive">*</span>
+                          </Label>
+                          <Select
+                            value={shippingDestinationId || undefined}
+                            onValueChange={setShippingDestinationId}
+                            required
+                          >
+                            <SelectTrigger id="shipping-area" className="w-full bg-background">
+                              <SelectValue placeholder="Select your area (required)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {shippingRows.map((row) => (
+                                <SelectItem key={row.id} value={row.id}>
+                                  {row.place_name} — {Number(row.price_le).toFixed(2)} LE
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {selectedShipping ? (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Shipping</span>
+                              <span className="tabular-nums font-medium">
+                                {shippingFee.toFixed(2)} LE
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-destructive">
+                              You must select a delivery area to place your order.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-border/80 pt-2 text-base font-bold">
+                        <span>Total</span>
+                        <span className="tabular-nums">{grandTotal.toFixed(2)} LE</span>
+                      </div>
+                    </div>
                     <div>
                       <Label htmlFor="name">Full Name</Label>
                       <Input
@@ -271,7 +397,17 @@ export default function Cart() {
                       </RadioGroup>
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" className="flex-1" disabled={loading}>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={
+                          loading ||
+                          shippingLoading ||
+                          shippingError ||
+                          !shippingReady ||
+                          !shippingDestinationId
+                        }
+                      >
                         {loading ? "Placing Order..." : "Place Order"}
                       </Button>
                       <Button

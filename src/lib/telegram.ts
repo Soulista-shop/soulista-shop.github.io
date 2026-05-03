@@ -18,6 +18,8 @@ interface OrderData {
   items: OrderItem[];
   total_amount: number;
   payment_method?: string;
+  shipping_place_name?: string;
+  shipping_fee_le?: number;
 }
 
 interface TelegramSubscriber {
@@ -57,6 +59,14 @@ export async function sendOrderToTelegram(orderData: OrderData): Promise<void> {
       })
       .join("\n\n");
 
+    const itemsSubtotal = orderData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shipFee = orderData.shipping_fee_le ?? 0;
+    const shipName = orderData.shipping_place_name?.trim();
+    const shippingBlock =
+      shipName || shipFee > 0
+        ? `\n🚚 *Shipping:*\nArea: ${shipName || "—"}\nShipping fee: ${shipFee.toFixed(2)} LE\nItems subtotal: ${itemsSubtotal.toFixed(2)} LE`
+        : "";
+
     const message = `
 🛍️ *NEW ORDER RECEIVED*
 
@@ -68,8 +78,9 @@ Address: ${orderData.customer_address}
 
 📦 *Order Items:*
 ${itemsList}
+${shippingBlock}
 
-💰 *Total Amount: ${orderData.total_amount.toFixed(2)} LE*
+💰 *Total (items + shipping): ${orderData.total_amount.toFixed(2)} LE*
 
 Payment Method: ${orderData.payment_method === "instapay" ? "InstaPay (customer sent to payment page)" : orderData.payment_method === "cash_on_delivery" ? "Cash on Delivery" : orderData.payment_method ?? "Not specified"}
 Status: Pending
