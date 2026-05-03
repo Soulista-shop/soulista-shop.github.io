@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
 import { sendOrderToTelegram } from "@/lib/telegram";
 import { z } from "zod";
 
@@ -116,7 +117,10 @@ export default function Cart() {
                       {item.size ? (
                         <p className="text-sm text-muted-foreground mt-0.5">Size: {item.size}</p>
                       ) : null}
-                      <p className="text-lg font-bold mt-1">{item.price} LE</p>
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-1">
+                        <p className="text-lg font-bold">{item.price} LE</p>
+                        <ShippingPlusLabel />
+                      </div>
                       <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-4">
                         <Button
                           variant="outline"

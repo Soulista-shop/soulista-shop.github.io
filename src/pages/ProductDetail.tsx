@@ -16,6 +16,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
 
 interface Product {
   id: string;
@@ -247,18 +248,22 @@ const ProductDetail = () => {
 
             <div className="mb-6">
               {product.discount_price ? (
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <p className="text-xl sm:text-2xl text-muted-foreground line-through">
                     {product.price} LE
                   </p>
                   <p className="text-2xl sm:text-3xl font-bold text-primary">
                     {product.discount_price} LE
                   </p>
+                  <ShippingPlusLabel className="text-base sm:text-lg" />
                 </div>
               ) : (
-                <p className="text-2xl sm:text-3xl font-bold text-primary">
-                  {product.price} LE
-                </p>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p className="text-2xl sm:text-3xl font-bold text-primary">
+                    {product.price} LE
+                  </p>
+                  <ShippingPlusLabel className="text-base sm:text-lg" />
+                </div>
               )}
             </div>
             <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 whitespace-pre-wrap">

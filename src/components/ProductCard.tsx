@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -119,14 +120,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </p>
           ) : null}
         </CardContent>
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-4 pt-0 flex flex-col items-start gap-1">
           {hasDiscount ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <p className="text-sm text-muted-foreground line-through">{product.price} LE</p>
               <p className="text-lg font-bold text-primary">{displayPrice} LE</p>
+              <ShippingPlusLabel />
             </div>
           ) : (
-            <p className="text-lg font-bold text-primary">{product.price} LE</p>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <p className="text-lg font-bold text-primary">{product.price} LE</p>
+              <ShippingPlusLabel />
+            </div>
           )}
         </CardFooter>
       </Card>

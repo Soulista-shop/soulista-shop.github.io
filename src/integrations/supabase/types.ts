@@ -176,6 +176,33 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_destinations: {
+        Row: {
+          created_at: string | null
+          id: string
+          place_name: string
+          price_le: number
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          place_name: string
+          price_le: number
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          place_name?: string
+          price_le?: number
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
