@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 const INSTAPAY_APP_URL = "ipn://S/nadasobhin/instapay/4SSLep";
 const WHATSAPP_URL = "https://wa.me/201505458957";
 const WHATSAPP_LABEL = "+20 150 5458957";
-const INSTAPAY_LOGO_SRC = "/instapay/instapay-logo.png";
+const INSTAPAY_LOGO_SRC = "/instapay/instapay-logo.webp";
 const qrCodeImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(INSTAPAY_APP_URL)}`;
 
 function WhatsAppGlyph({ className }: { className?: string }) {
@@ -25,23 +25,21 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 
 const Instapay = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-16 pt-6 md:pt-8">
-      <header className="mb-8 border-b border-border/50 bg-muted/40 md:mb-10">
-        <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 md:py-10">
-          <div className="flex w-full items-center justify-center leading-none">
-            <img
-              src={INSTAPAY_LOGO_SRC}
-              alt="InstaPay"
-              className="block h-auto w-full max-w-[280px] shrink-0 object-contain sm:max-w-[300px]"
-              loading="eager"
-              decoding="async"
-            />
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-20 pt-8 md:pt-10">
+      <header className="mb-10 border-b border-border/40 bg-muted/30 md:mb-12">
+        <div className="mx-auto flex w-full max-w-4xl justify-center px-4 py-8 md:py-10">
+          <img
+            src={INSTAPAY_LOGO_SRC}
+            alt="InstaPay"
+            className="block h-auto w-full max-w-[320px] shrink-0 object-contain object-center"
+            loading="eager"
+            decoding="async"
+          />
         </div>
       </header>
 
       <div className="container mx-auto max-w-4xl px-4">
-        <div className="text-center mb-10 md:mb-12">
+        <div className="mb-10 text-center md:mb-12">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
             Pay with InstaPay
           </h1>
@@ -98,7 +96,7 @@ const Instapay = () => {
           </section>
         </div>
 
-        <footer className="mt-10 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-5 py-6 dark:bg-[#25D366]/15 md:mt-12 md:px-8 md:py-7">
+        <footer className="mt-12 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-5 py-6 dark:bg-[#25D366]/15 md:mt-16 md:px-8 md:py-7">
           <div className="flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:gap-6 sm:text-left">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md">
               <WhatsAppGlyph className="h-8 w-8" />
