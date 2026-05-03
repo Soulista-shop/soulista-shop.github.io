@@ -5,8 +5,8 @@ const INSTAPAY_APP_URL = "ipn://S/nadasobhin/instapay/4SSLep";
 const INSTAPAY_WEB_URL = "https://ipn.eg/S/nadasobhin/instapay/4SSLep";
 const WHATSAPP_URL = "https://wa.me/201505458957";
 const WHATSAPP_LABEL = "+20 150 5458957";
-const LOGO_SRC = "/instapay/ipn-logo.svg";
-const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(INSTAPAY_APP_URL)}`;
+const INSTAPAY_LOGO_SRC = "/instapay/instapay-logo.png";
+const INSTAPAY_QR_SRC = "/instapay/ipn-qr.svg";
 
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
@@ -29,15 +29,23 @@ const Instapay = () => {
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pt-20 pb-16 px-4">
       <div className="container mx-auto max-w-4xl">
         <header className="text-center mb-10 md:mb-14">
-          <div className="inline-flex items-center justify-center rounded-2xl bg-card border shadow-sm px-6 py-4 mb-6">
-            <img src={LOGO_SRC} alt="InstaPay" className="h-10 md:h-12 w-auto" width={120} height={72} />
+          <div className="flex flex-col items-center gap-5">
+            <img
+              src={INSTAPAY_LOGO_SRC}
+              alt="InstaPay"
+              className="h-12 md:h-14 w-auto object-contain"
+              width={200}
+              height={56}
+            />
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+                Pay with InstaPay
+              </h1>
+              <p className="mt-3 text-muted-foreground text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+                Pay in the app or scan the QR, then send us a screenshot on WhatsApp so we can confirm your order.
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-            Pay with InstaPay
-          </h1>
-          <p className="mt-3 text-muted-foreground text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-            Choose how you want to pay, then send us a screenshot on WhatsApp so we can confirm your order.
-          </p>
         </header>
 
         <div className="grid gap-5 md:gap-6 md:grid-cols-2">
@@ -85,15 +93,13 @@ const Instapay = () => {
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2 w-full">Scan here</h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
-              Point your camera at the code to open the same payment in InstaPay.
+              Scan with your phone camera to open this payment in InstaPay.
             </p>
-            <div className="rounded-2xl bg-white p-4 shadow-inner border border-border/60">
+            <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-inner border border-border/60 w-full max-w-[280px]">
               <img
-                src={qrImageSrc}
-                alt="QR code to open InstaPay payment"
-                width={280}
-                height={280}
-                className="w-48 h-48 sm:w-56 sm:h-56 md:w-[220px] md:h-[220px] object-contain"
+                src={INSTAPAY_QR_SRC}
+                alt="InstaPay payment QR code"
+                className="w-full max-w-[240px] h-auto object-contain mx-auto"
                 loading="lazy"
                 decoding="async"
               />
