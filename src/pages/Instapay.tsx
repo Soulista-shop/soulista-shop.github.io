@@ -25,28 +25,23 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 
 const Instapay = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-20 pt-6 md:pt-8">
-      <header className="mb-4 border-b border-border/40 bg-muted/30 md:mb-5">
-        <div className="mx-auto flex w-full max-w-4xl justify-center px-4 py-4 md:py-5">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-16 pt-3 md:pb-20 md:pt-4">
+      <div className="container mx-auto max-w-4xl">
+        <header className="mb-6 flex flex-col items-center gap-2 border-b border-border/40 bg-muted/25 pb-4 text-center md:mb-8 md:gap-2.5 md:pb-5">
           <img
             src={INSTAPAY_LOGO_SRC}
             alt="InstaPay"
-            className="block h-auto w-full max-w-[320px] shrink-0 object-contain object-center"
+            className="block h-auto w-auto max-h-[48px] max-w-[min(46vw,160px)] shrink-0 object-contain object-center sm:max-h-[52px] sm:max-w-[176px] md:max-h-[56px] md:max-w-[192px]"
             loading="eager"
             decoding="async"
           />
-        </div>
-      </header>
-
-      <div className="container mx-auto max-w-4xl px-4">
-        <div className="mb-8 text-center md:mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Pay with InstaPay
           </h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
             Use either option below, then send us a payment screenshot on WhatsApp so we can confirm your order.
           </p>
-        </div>
+        </header>
 
         <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-5">
           <section className="flex flex-1 flex-col rounded-2xl border bg-card/80 p-6 shadow-sm backdrop-blur-sm md:p-8">
@@ -96,7 +91,7 @@ const Instapay = () => {
           </section>
         </div>
 
-        <footer className="mt-12 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-5 py-6 dark:bg-[#25D366]/15 md:mt-16 md:px-8 md:py-7">
+        <footer className="mt-8 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-5 py-6 dark:bg-[#25D366]/15 md:mt-10 md:px-8 md:py-7">
           <div className="flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:gap-6 sm:text-left">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md">
               <WhatsAppGlyph className="h-8 w-8" />
