@@ -17,6 +17,7 @@ interface OrderData {
   customer_address: string;
   items: OrderItem[];
   total_amount: number;
+  payment_method?: string;
 }
 
 interface TelegramSubscriber {
@@ -70,7 +71,7 @@ ${itemsList}
 
 💰 *Total Amount: ${orderData.total_amount.toFixed(2)} LE*
 
-Payment Method: Cash on Delivery
+Payment Method: ${orderData.payment_method === "instapay" ? "InstaPay (customer sent to payment page)" : orderData.payment_method === "cash_on_delivery" ? "Cash on Delivery" : orderData.payment_method ?? "Not specified"}
 Status: Pending
     `.trim();
 

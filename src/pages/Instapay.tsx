@@ -1,4 +1,5 @@
 import { ArrowRight, QrCode } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const INSTAPAY_APP_URL = "ipn://S/nadasobhin/instapay/4SSLep";
@@ -23,23 +24,45 @@ function WhatsAppGlyph({ className }: { className?: string }) {
   );
 }
 
+function InstapayLogo() {
+  return (
+    <div className="mx-auto flex h-[72px] w-[min(78vw,264px)] items-center justify-center overflow-hidden sm:h-[78px] sm:w-[286px] md:h-[84px] md:w-[308px]">
+      <div className="flex origin-center scale-[1.5] items-center justify-center">
+        <img
+          src={INSTAPAY_LOGO_SRC}
+          alt="InstaPay"
+          className="block h-[48px] w-auto max-w-[min(52vw,200px)] shrink-0 object-contain object-center [clip-path:inset(20%_2%_20%_2%)] sm:h-[52px] sm:max-w-[220px] md:h-[56px] md:max-w-[240px]"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+    </div>
+  );
+}
+
 const Instapay = () => {
+  const location = useLocation();
+  const fromCheckout = Boolean(
+    (location.state as { fromCheckout?: boolean } | null)?.fromCheckout
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-16 pt-3 md:pb-20 md:pt-4">
       <div className="container mx-auto max-w-4xl">
         <header className="mb-6 flex flex-col items-center gap-2 border-b border-border/40 bg-muted/25 pb-4 text-center md:mb-8 md:gap-2.5 md:pb-5">
-          <img
-            src={INSTAPAY_LOGO_SRC}
-            alt="InstaPay"
-            className="block h-auto w-auto max-h-[48px] max-w-[min(46vw,160px)] shrink-0 object-contain object-center sm:max-h-[52px] sm:max-w-[176px] md:max-h-[56px] md:max-w-[192px]"
-            loading="eager"
-            decoding="async"
-          />
+          <InstapayLogo />
           <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Pay with InstaPay
           </h1>
+          {fromCheckout ? (
+            <p className="max-w-xl rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-foreground md:text-[0.9375rem]">
+              Your order is saved. Complete payment below, then send us a screenshot on WhatsApp so we can confirm it.
+            </p>
+          ) : null}
           <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-            Use either option below, then send us a payment screenshot on WhatsApp so we can confirm your order.
+            {fromCheckout
+              ? "Use either option below to pay in InstaPay."
+              : "Use either option below, then send us a payment screenshot on WhatsApp so we can confirm your order."}
           </p>
         </header>
 

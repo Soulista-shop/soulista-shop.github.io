@@ -21,6 +21,7 @@ export type Database = {
           background_opacity: number | null
           category_name: string
           created_at: string
+          display_order: number
           frame_enabled: boolean | null
           frame_image: string | null
           id: string
@@ -32,6 +33,7 @@ export type Database = {
           background_opacity?: number | null
           category_name: string
           created_at?: string
+          display_order?: number
           frame_enabled?: boolean | null
           frame_image?: string | null
           id?: string
@@ -43,6 +45,7 @@ export type Database = {
           background_opacity?: number | null
           category_name?: string
           created_at?: string
+          display_order?: number
           frame_enabled?: boolean | null
           frame_image?: string | null
           id?: string

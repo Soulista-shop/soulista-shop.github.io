@@ -52,10 +52,11 @@ const Shop = () => {
     const { data, error } = await supabase
       .from("category_settings")
       .select("category_name")
-      .order("category_name");
+      .order("display_order", { ascending: true })
+      .order("category_name", { ascending: true });
 
     if (!error && data) {
-      setCategories(["All", ...data.map(c => c.category_name)]);
+      setCategories(["All", ...data.map((c) => c.category_name)]);
     }
   };
 

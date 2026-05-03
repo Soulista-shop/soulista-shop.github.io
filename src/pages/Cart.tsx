@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -20,11 +21,14 @@ const checkoutSchema = z.object({
   address: z.string().min(10, "Address must be at least 10 characters").max(500),
 });
 
+type CheckoutPaymentMethod = "cash_on_delivery" | "instapay";
+
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, clearCart, total } = useCart();
   const navigate = useNavigate();
   const [isCheckout, setIsCheckout] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>("cash_on_delivery");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -52,7 +56,7 @@ export default function Cart() {
           ...(item.size ? { size: item.size } : {}),
         })),
         total_amount: total,
-        payment_method: "cash_on_delivery",
+        payment_method: paymentMethod,
         status: "pending",
       };
 
@@ -63,13 +67,21 @@ export default function Cart() {
       // Send order notification to Telegram
       await sendOrderToTelegram(orderData);
 
-      toast({
-        title: "Order Placed!",
-        description: "Your order has been placed successfully. We'll contact you soon!",
-      });
-
       clearCart();
-      navigate("/");
+
+      if (paymentMethod === "instapay") {
+        toast({
+          title: "Order placed",
+          description: "Complete your payment on the InstaPay page.",
+        });
+        navigate("/instapay", { replace: true, state: { fromCheckout: true } });
+      } else {
+        toast({
+          title: "Order placed",
+          description: "We will contact you to confirm cash on delivery.",
+        });
+        navigate("/", { replace: true });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -164,10 +176,17 @@ export default function Cart() {
                   <span>{total.toFixed(2)} LE</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Payment Method: Cash on Delivery
+                  Choose how you will pay at checkout. InstaPay opens the payment page after your order is
+                  saved.
                 </p>
                 {!isCheckout ? (
-                  <Button className="w-full" onClick={() => setIsCheckout(true)}>
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setPaymentMethod("cash_on_delivery");
+                      setIsCheckout(true);
+                    }}
+                  >
                     Proceed to Checkout
                   </Button>
                 ) : (
@@ -222,6 +241,34 @@ export default function Cart() {
                         rows={3}
                         maxLength={500}
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Payment method</Label>
+                      <RadioGroup
+                        value={paymentMethod}
+                        onValueChange={(v) => setPaymentMethod(v as CheckoutPaymentMethod)}
+                        className="grid gap-3"
+                      >
+                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+                          <RadioGroupItem value="cash_on_delivery" id="pay-cod" className="mt-0.5" />
+                          <div className="grid gap-0.5 leading-none">
+                            <span className="text-sm font-medium leading-snug">Cash on delivery</span>
+                            <span className="text-xs text-muted-foreground">
+                              Pay when your order is delivered.
+                            </span>
+                          </div>
+                        </label>
+                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+                          <RadioGroupItem value="instapay" id="pay-instapay" className="mt-0.5" />
+                          <div className="grid gap-0.5 leading-none">
+                            <span className="text-sm font-medium leading-snug">InstaPay</span>
+                            <span className="text-xs text-muted-foreground">
+                              After placing the order you will go to InstaPay, then send us a payment
+                              screenshot on WhatsApp.
+                            </span>
+                          </div>
+                        </label>
+                      </RadioGroup>
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" className="flex-1" disabled={loading}>
