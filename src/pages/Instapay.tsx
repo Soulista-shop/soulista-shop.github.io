@@ -1,8 +1,7 @@
-import { ArrowRight, Smartphone, QrCode } from "lucide-react";
+import { ArrowRight, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const INSTAPAY_APP_URL = "ipn://S/nadasobhin/instapay/4SSLep";
-const INSTAPAY_WEB_URL = "https://ipn.eg/S/nadasobhin/instapay/4SSLep";
 const WHATSAPP_URL = "https://wa.me/201505458957";
 const WHATSAPP_LABEL = "+20 150 5458957";
 const INSTAPAY_LOGO_SRC = "/instapay/instapay-logo.png";
@@ -26,84 +25,67 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 
 const Instapay = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-16 px-4 pt-28 md:pt-32">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background px-4 pb-16 pt-10 md:pt-14">
       <div className="container mx-auto max-w-4xl">
-        <header className="text-center mb-10 md:mb-14 scroll-mt-28">
-          <div className="flex flex-col items-center gap-5">
-            <div className="w-full flex justify-center overflow-visible py-2">
-              <img
-                src={INSTAPAY_LOGO_SRC}
-                alt="InstaPay"
-                className="max-h-14 md:max-h-[4.5rem] w-auto h-auto object-contain object-center block"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-                Pay with InstaPay
-              </h1>
-              <p className="mt-3 text-muted-foreground text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-                Pay in the app or scan the QR, then send us a screenshot on WhatsApp so we can confirm your order.
-              </p>
-            </div>
+        <header className="text-center mb-10 md:mb-12">
+          <div className="mx-auto mb-6 flex w-full justify-center px-2 sm:px-4">
+            <img
+              src={INSTAPAY_LOGO_SRC}
+              alt="InstaPay"
+              className="h-auto w-auto max-w-[min(100%,280px)] object-contain"
+              loading="eager"
+              decoding="async"
+            />
           </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            Pay with InstaPay
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+            Use either option below, then send us a payment screenshot on WhatsApp so we can confirm your order.
+          </p>
         </header>
 
-        <div className="grid gap-5 md:gap-6 md:grid-cols-2">
-          <section className="rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm p-6 md:p-8 flex flex-col h-full">
-            <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wide mb-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                1
-              </span>
-              <Smartphone className="h-4 w-4" aria-hidden />
-              <span>App</span>
-            </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">Tap to pay</h2>
-            <p className="text-sm text-muted-foreground mb-6 flex-1 leading-relaxed">
-              Opens the InstaPay app on your phone if it is installed. On desktop, use your phone or scan the QR on the right.
+        <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-5">
+          <section className="flex flex-1 flex-col rounded-2xl border bg-card/80 p-6 shadow-sm backdrop-blur-sm md:p-8">
+            <h2 className="text-lg font-semibold text-foreground md:text-xl">Click here</h2>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+              Opens the InstaPay app on your device when it is installed.
             </p>
             <Button
               size="lg"
-              className="w-full rounded-xl h-12 md:h-14 text-base font-semibold shadow-md touch-manipulation"
+              className="mt-6 h-12 w-full touch-manipulation rounded-xl text-base font-semibold shadow-md md:h-14"
               asChild
             >
               <a href={INSTAPAY_APP_URL} className="inline-flex items-center justify-center gap-2">
-                Click here to pay
+                Click here
                 <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
               </a>
             </Button>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              <a
-                href={INSTAPAY_WEB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:text-foreground"
-              >
-                Pay in browser instead
-              </a>
-            </p>
           </section>
 
-          <section className="rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm p-6 md:p-8 flex flex-col h-full items-center text-center">
-            <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wide mb-4 self-stretch justify-center md:justify-start md:self-start">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                2
-              </span>
-              <QrCode className="h-4 w-4" aria-hidden />
-              <span>Scan</span>
-            </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2 w-full">Scan here</h2>
-            <p className="text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
-              Scan with your phone camera to open this payment in InstaPay.
+          <div className="flex items-center justify-center gap-3 py-1 md:self-center md:py-2">
+            <div className="h-px flex-1 bg-border md:hidden" />
+            <span className="shrink-0 rounded-full border border-border bg-muted px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              or
+            </span>
+            <div className="h-px flex-1 bg-border md:hidden" />
+          </div>
+
+          <section className="flex flex-1 flex-col items-center rounded-2xl border bg-card/80 p-6 text-center shadow-sm backdrop-blur-sm md:items-stretch md:p-8 md:text-left">
+            <h2 className="flex w-full items-center justify-center gap-2 text-lg font-semibold text-foreground md:justify-start md:text-xl">
+              <QrCode className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+              Scan
+            </h2>
+            <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground md:mx-0 md:text-left">
+              Scan this code with your phone camera to open the same payment in InstaPay.
             </p>
-            <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-inner border border-border/60 w-full max-w-[280px]">
+            <div className="mt-6 w-full max-w-[260px] self-center rounded-2xl border border-border/60 bg-white p-4 shadow-inner sm:p-5">
               <img
                 src={qrCodeImageSrc}
-                alt="QR code to open this InstaPay payment in the app"
+                alt="QR code for InstaPay payment"
                 width={280}
                 height={280}
-                className="w-full max-w-[240px] h-auto aspect-square object-contain mx-auto"
+                className="mx-auto aspect-square w-full max-w-[240px] object-contain"
                 loading="lazy"
                 decoding="async"
               />
@@ -111,29 +93,29 @@ const Instapay = () => {
           </section>
         </div>
 
-        <footer className="mt-10 md:mt-12 rounded-2xl border bg-[#25D366]/10 dark:bg-[#25D366]/15 border-[#25D366]/25 px-5 py-6 md:px-8 md:py-7">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-center sm:text-left">
+        <footer className="mt-10 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-5 py-6 dark:bg-[#25D366]/15 md:mt-12 md:px-8 md:py-7">
+          <div className="flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:gap-6 sm:text-left">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md">
               <WhatsAppGlyph className="h-8 w-8" />
             </div>
-            <div className="space-y-1 max-w-md">
+            <div className="max-w-md space-y-2">
               <p className="text-sm font-medium text-foreground">After you pay</p>
-              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                Send a screenshot to WhatsApp{" "}
+              <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+                Send a screenshot to{" "}
                 <a
                   href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-[#128C7E] dark:text-[#25D366] underline underline-offset-2 hover:opacity-90"
+                  className="font-semibold text-[#128C7E] underline underline-offset-2 hover:opacity-90 dark:text-[#25D366]"
                 >
                   {WHATSAPP_LABEL}
                 </a>
-                .
+                . The button below opens in WhatsApp and goes straight to the chat with this number.
               </p>
             </div>
             <Button variant="secondary" className="shrink-0 touch-manipulation" asChild>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                Open WhatsApp
+                Open in WhatsApp
               </a>
             </Button>
           </div>
