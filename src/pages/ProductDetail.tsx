@@ -143,7 +143,17 @@ const ProductDetail = () => {
       ...(selectedSize ? { size: selectedSize } : {}),
     });
     toast.success("Added to cart!", {
-      description: `${product.name}${selectedSize ? ` (${selectedSize})` : ""} has been added to your cart.`,
+      description: (
+        <span>
+          {`${product.name}${selectedSize ? ` (${selectedSize})` : ""} has been added to your cart. `}
+          <Link
+            to="/cart"
+            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+          >
+            View cart
+          </Link>
+        </span>
+      ),
     });
   };
 

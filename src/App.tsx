@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
+import { ScrollToTop } from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -27,6 +28,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <CartProvider>
             <Navigation />
