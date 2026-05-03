@@ -12,6 +12,7 @@ import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Instapay from "./pages/Instapay";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Cart from "./pages/Cart";
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/instapay" element={<Instapay />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/cart" element={<Cart />} />

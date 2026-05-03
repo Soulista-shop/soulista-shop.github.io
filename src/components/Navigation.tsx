@@ -32,6 +32,7 @@ export const Navigation = () => {
     { name: "Shop", path: "/shop" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
+    { name: "Instapay", path: "/instapay" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
