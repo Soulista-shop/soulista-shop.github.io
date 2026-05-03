@@ -25,9 +25,9 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 
 const Instapay = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-20 pt-8 md:pt-10">
-      <header className="mb-10 border-b border-border/40 bg-muted/30 md:mb-12">
-        <div className="mx-auto flex w-full max-w-4xl justify-center px-4 py-8 md:py-10">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background pb-20 pt-6 md:pt-8">
+      <header className="mb-4 border-b border-border/40 bg-muted/30 md:mb-5">
+        <div className="mx-auto flex w-full max-w-4xl justify-center px-4 py-4 md:py-5">
           <img
             src={INSTAPAY_LOGO_SRC}
             alt="InstaPay"
@@ -39,11 +39,11 @@ const Instapay = () => {
       </header>
 
       <div className="container mx-auto max-w-4xl px-4">
-        <div className="mb-10 text-center md:mb-12">
+        <div className="mb-8 text-center md:mb-10">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
             Pay with InstaPay
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
             Use either option below, then send us a payment screenshot on WhatsApp so we can confirm your order.
           </p>
         </div>
