@@ -17,7 +17,9 @@ export function getR2PublicBase() {
     process.env.R2_PUBLIC_BASE_URL ||
     process.env.VITE_MEDIA_PUBLIC_BASE_URL ||
     "https://pub-b2e8b89bb29245d39698ff1c7c2eab0e.r2.dev"
-  ).replace(/\/$/, "");
+  )
+    .trim()
+    .replace(/\/$/, "");
 }
 
 export function getR2EnvStatus() {
