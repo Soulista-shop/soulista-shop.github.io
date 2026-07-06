@@ -1,12 +1,12 @@
 import { S3Client, ListObjectsV2Command, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 export function getR2Client() {
-  const accountId = process.env.R2_ACCOUNT_ID;
+  const accountId = process.env.R2_ACCOUNT_ID || "15cd065a7eb4dbb50c158aa5584a0e8c";
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 
-  if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new Error("R2 credentials are not configured");
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("R2 credentials are not configured on the server. Add R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in Vercel environment variables.");
   }
 
   return new S3Client({
@@ -21,8 +21,10 @@ export function getR2Bucket() {
 }
 
 export function getPublicBaseUrl() {
-  const base = process.env.R2_PUBLIC_BASE_URL;
-  if (!base) throw new Error("R2_PUBLIC_BASE_URL is not configured");
+  const base =
+    process.env.R2_PUBLIC_BASE_URL ||
+    process.env.VITE_MEDIA_PUBLIC_BASE_URL ||
+    "https://pub-b2e8b89bb29245d39698ff1c7c2eab0e.r2.dev";
   return base.replace(/\/$/, "");
 }
 
@@ -91,6 +93,20 @@ export async function deleteMediaObject(key) {
   );
 }
 
+function getSupabaseConfig() {
+  const url =
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    "https://ktaaodvqxiqqtlekneqj.supabase.co";
+  const anonKey =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YWFvZHZxeGlxcXRsZWtuZXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzUwMjIsImV4cCI6MjA3ODgxMTAyMn0.dawgkm2EeFa0UVp6dl-iUrppAqi2fvfGcxb3BRnvbfc";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return { url, anonKey, serviceKey };
+}
+
 export async function verifyAdmin(req) {
   const authHeader = req.headers.authorization || req.headers.Authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -98,17 +114,17 @@ export async function verifyAdmin(req) {
   }
 
   const token = authHeader.slice(7);
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { url: supabaseUrl, anonKey, serviceKey } = getSupabaseConfig();
+  const apiKey = serviceKey || anonKey;
 
-  if (!supabaseUrl || !serviceKey) {
+  if (!supabaseUrl || !apiKey) {
     return { ok: false, status: 500, error: "Server auth not configured" };
   }
 
   const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      apikey: serviceKey,
+      apikey: apiKey,
     },
   });
 
@@ -121,8 +137,8 @@ export async function verifyAdmin(req) {
     `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${user.id}&role=eq.admin&select=role`,
     {
       headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        apikey: serviceKey,
+        Authorization: `Bearer ${token}`,
+        apikey: apiKey,
       },
     }
   );
