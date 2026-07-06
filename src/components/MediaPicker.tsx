@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Folder, Image as ImageIcon, Upload, ChevronLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-interface MediaFile {
-  name: string;
-  id: string;
-  created_at: string;
-  metadata: any;
-  path: string;
-}
+import { getMediaPublicUrl, listMediaFiles, uploadMediaFiles, type MediaListFile } from "@/lib/mediaApi";
 
 interface MediaPickerProps {
   open: boolean;
@@ -24,7 +16,7 @@ interface MediaPickerProps {
 }
 
 export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, selectedUrls = [] }: MediaPickerProps) {
-  const [files, setFiles] = useState<MediaFile[]>([]);
+  const [files, setFiles] = useState<MediaListFile[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [currentFolder, setCurrentFolder] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -36,65 +28,33 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
   }, [currentFolder, open]);
 
   const fetchFiles = async () => {
-    const { data, error } = await supabase.storage.from("media").list(currentFolder, {
-      limit: 1000,
-      sortBy: { column: "name", order: "asc" },
-    });
-
-    if (error) {
+    try {
+      const { folders: folderList, files: fileList } = await listMediaFiles(currentFolder);
+      setFolders(folderList.filter((f) => f && !f.startsWith(".")));
+      setFiles(fileList);
+    } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
     }
-
-    const folderSet = new Set<string>();
-    const fileList: MediaFile[] = [];
-
-    data?.forEach((item) => {
-      if (item.id === null) {
-        folderSet.add(item.name);
-      } else {
-        fileList.push({
-          name: item.name,
-          id: item.id,
-          created_at: item.created_at,
-          metadata: item.metadata,
-          path: currentFolder ? `${currentFolder}/${item.name}` : item.name,
-        });
-      }
-    });
-
-    setFolders(Array.from(folderSet));
-    setFiles(fileList);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
     setUploading(true);
 
-    for (const file of Array.from(files)) {
-      const filePath = currentFolder ? `${currentFolder}/${file.name}` : file.name;
-
-      const { error } = await supabase.storage.from("media").upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-      if (error) {
-        toast({ title: "Error", description: `Failed to upload ${file.name}: ${error.message}`, variant: "destructive" });
-      }
+    try {
+      await uploadMediaFiles(currentFolder, Array.from(fileList));
+      toast({ title: "Success", description: "Files uploaded successfully" });
+      fetchFiles();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
-    fetchFiles();
-    toast({ title: "Success", description: "Files uploaded successfully" });
   };
 
-  const getPublicUrl = (path: string) => {
-    const { data } = supabase.storage.from("media").getPublicUrl(path);
-    return data.publicUrl;
-  };
+  const getPublicUrl = (path: string) => getMediaPublicUrl(path);
 
   const navigateToFolder = (folder: string) => {
     setCurrentFolder(currentFolder ? `${currentFolder}/${folder}` : folder);
@@ -173,7 +133,7 @@ export function MediaPicker({ open, onOpenChange, onSelect, multiple = false, se
                 const isSelected = selectedUrls.includes(url);
                 return (
                   <button
-                    key={file.id}
+                    key={file.path}
                     onClick={() => handleSelect(file.path)}
                     className={`relative aspect-square w-full border rounded-lg overflow-hidden hover:border-primary transition ${
                       isSelected ? "border-primary ring-2 ring-primary" : ""

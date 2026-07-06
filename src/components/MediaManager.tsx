@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,12 +6,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { Upload, Trash2, FolderPlus, Folder, Image as ImageIcon, Copy, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import {
+  deleteMediaFile,
+  getMediaPublicUrl,
+  listMediaFiles,
+  uploadMediaFiles,
+} from "@/lib/mediaApi";
 
 interface MediaFile {
   name: string;
-  id: string;
   created_at: string;
-  metadata: any;
   path: string;
 }
 
@@ -31,42 +34,13 @@ export function MediaManager() {
   }, [currentFolder]);
 
   const fetchFiles = async () => {
-    const path = currentFolder || "";
-    
-    const { data: fileList, error } = await supabase.storage
-      .from("media")
-      .list(path, {
-        limit: 100,
-        sortBy: { column: "name", order: "asc" },
-      });
-
-    if (error) {
+    try {
+      const { folders: folderList, files: fileList } = await listMediaFiles(currentFolder);
+      setFolders(folderList.filter((f) => f && !f.startsWith(".")));
+      setFiles(fileList);
+    } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
     }
-
-    // Separate folders and files
-    const folderSet = new Set<string>();
-    const mediaFiles: MediaFile[] = [];
-
-    fileList?.forEach((item) => {
-      if (item.id === null) {
-        // This is a folder
-        folderSet.add(item.name);
-      } else {
-        // This is a file
-        mediaFiles.push({
-          name: item.name,
-          id: item.id,
-          created_at: item.created_at,
-          metadata: item.metadata,
-          path: path ? `${path}/${item.name}` : item.name,
-        });
-      }
-    });
-
-    setFolders(Array.from(folderSet));
-    setFiles(mediaFiles);
   };
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -81,35 +55,27 @@ export function MediaManager() {
 
     setUploadingFiles(true);
 
-    for (const file of Array.from(selectedFiles)) {
-      const filePath = currentFolder ? `${currentFolder}/${file.name}` : file.name;
-
-      const { error } = await supabase.storage.from("media").upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-      if (error) {
-        toast({ title: "Error uploading " + file.name, description: error.message, variant: "destructive" });
-      }
+    try {
+      await uploadMediaFiles(currentFolder, Array.from(selectedFiles));
+      setIsUploadDialogOpen(false);
+      toast({ title: "Success", description: "Files uploaded successfully" });
+      fetchFiles();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingFiles(false);
     }
-
-    setUploadingFiles(false);
-    setIsUploadDialogOpen(false);
-    toast({ title: "Success", description: "Files uploaded successfully" });
-    fetchFiles();
   };
 
   const handleDelete = async (path: string) => {
     if (!confirm("Are you sure you want to delete this file?")) return;
 
-    const { error } = await supabase.storage.from("media").remove([path]);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      await deleteMediaFile(path);
       toast({ title: "Success", description: "File deleted successfully" });
       fetchFiles();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
@@ -119,43 +85,35 @@ export function MediaManager() {
       return;
     }
 
-    // Create a placeholder file to create the folder using a 1x1 transparent PNG
-    const folderPath = currentFolder ? `${currentFolder}/${newFolderName}/.keep` : `${newFolderName}/.keep`;
-    
-    // Create a minimal 1x1 transparent PNG
+    const folderPath = currentFolder
+      ? `${currentFolder}/${newFolderName.trim()}`
+      : newFolderName.trim();
+
     const transparentPng = new Uint8Array([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
       0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
       0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
       0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
       0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
-      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
     ]);
-    
-    const { error } = await supabase.storage
-      .from("media")
-      .upload(folderPath, new Blob([transparentPng], { type: "image/png" }), {
-        cacheControl: "3600",
-        upsert: false,
-      });
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const keepFile = new File([transparentPng], ".keep", { type: "image/png" });
+      await uploadMediaFiles(folderPath, [keepFile]);
       toast({ title: "Success", description: "Folder created successfully" });
       setNewFolderName("");
       setIsFolderDialogOpen(false);
       fetchFiles();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
-  const getPublicUrl = (path: string) => {
-    const { data } = supabase.storage.from("media").getPublicUrl(path);
-    return data.publicUrl;
-  };
+  const getPublicUrl = (path: string) => getMediaPublicUrl(path);
 
-  const copyUrl = (path: string) => {
-    const url = getPublicUrl(path);
+  const copyUrl = (pathOrUrl: string) => {
+    const url = pathOrUrl.startsWith("http") ? pathOrUrl : getPublicUrl(pathOrUrl);
     navigator.clipboard.writeText(url);
     toast({ title: "Success", description: "URL copied to clipboard" });
   };
@@ -301,7 +259,7 @@ export function MediaManager() {
           <h3 className="text-sm font-semibold mb-2">Files ({files.length})</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {files.map((file) => (
-              <div key={file.id} className="group relative border rounded-lg overflow-hidden flex flex-col">
+              <div key={file.path} className="group relative border rounded-lg overflow-hidden flex flex-col">
                 <div className="aspect-square w-full bg-muted flex items-center justify-center p-1 min-h-0 shrink-0">
                   <img
                     src={getPublicUrl(file.path)}
@@ -371,7 +329,7 @@ export function MediaManager() {
               />
               <div className="mt-4 flex gap-2">
                 <Input value={selectedImage} readOnly className="flex-1" />
-                <Button onClick={() => copyUrl(selectedImage.split("/").pop()!)}>
+                <Button onClick={() => copyUrl(selectedImage)}>
                   <Copy className="mr-2 h-4 w-4" />
                   Copy URL
                 </Button>
