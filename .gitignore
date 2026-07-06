@@ -25,3 +25,4 @@ scripts/.env.migration
 *.sln
 *.sw?
 .vercel
+.env*.local
