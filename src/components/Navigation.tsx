@@ -1,31 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingBag, LogIn, LogOut, Shield } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { supabase } from "@/lib/supabase";
+import { useContent } from "@/hooks/useContent";
+
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoSize, setLogoSize] = useState(64); // default 16 * 4 = 64px
+  const { content } = useContent();
+  const logoSize = useMemo(() => {
+    const raw = parseInt(content.logo_size?.text_content ?? "16", 10);
+    return Number.isFinite(raw) ? raw * 4 : 64;
+  }, [content.logo_size?.text_content]);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const { itemCount } = useCart();
-
-  useEffect(() => {
-    const fetchLogoSize = async () => {
-      const { data } = await supabase
-        .from("content_settings" as any)
-        .select("text_content")
-        .eq("section", "logo_size")
-        .single();
-      
-      if (data) {
-        setLogoSize(parseInt(data.text_content) * 4); // Convert h-16 to pixels (16 * 4 = 64px)
-      }
-    };
-    fetchLogoSize();
-  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },

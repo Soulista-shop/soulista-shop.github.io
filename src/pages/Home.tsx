@@ -2,24 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Instagram, Facebook } from "lucide-react";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useContent } from "@/hooks/useContent";
-
-// Resolve product asset image paths (supports assets and absolute URLs)
-const imageModules = import.meta.glob("/src/assets/products/*", { eager: true, as: "url" }) as Record<string, string>;
-const resolveImage = (path?: string) => {
-  if (!path) return "";
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("/")) return path;
-  const filename = path.split("/").pop()!;
-  const match = Object.keys(imageModules).find((k) => k.endsWith(`/${filename}`));
-  return match ? imageModules[match] : path;
-};
+import { useFeaturedProducts } from "@/hooks/useProducts";
 
 const Home = () => {
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const { getContent } = useContent();
+  const { data: featuredProducts = [], isLoading: loading } = useFeaturedProducts();
   const navigate = useNavigate();
 
   const featuredTitle = getContent(
@@ -35,50 +23,25 @@ const Home = () => {
     "font-sans"
   );
 
-  useEffect(() => {
-    const fetchFeatured = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("featured", true)
-        .order("sort_order", { ascending: true })
-        .limit(8);
-      if (!error) setFeaturedProducts((data || []).map(p => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        price: Number(p.price),
-        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
-        images: ((p.images && p.images.length > 0) ? p.images : [p.main_image]).map(resolveImage).filter(Boolean) as string[],
-        description: p.description,
-        out_of_stock: p.out_of_stock,
-        almost_sold_out: p.almost_sold_out,
-        sizes: p.sizes,
-      })));
-      setLoading(false);
-    };
-    fetchFeatured();
-  }, []);
-
-
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="bg-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className={`${getContent('hero_slogan').className} mb-6 animate-fade-in text-black`}>
-              {getContent('hero_slogan').text}
+            <h1 className={`${getContent("hero_slogan").className} mb-6 animate-fade-in text-black`}>
+              {getContent("hero_slogan").text}
             </h1>
-            <p className={`${getContent('hero_description').className} text-black mb-8 animate-fade-in`}>
-              {getContent('hero_description').text}
+            <p className={`${getContent("hero_description").className} text-black mb-8 animate-fade-in`}>
+              {getContent("hero_description").text}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="w-full sm:w-auto shadow-elegant"
-                onClick={() => { navigate('/shop'); window.scrollTo(0, 0); }}
+                onClick={() => {
+                  navigate("/shop");
+                  window.scrollTo(0, 0);
+                }}
               >
                 Shop Collection
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -93,7 +56,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
       <section className="py-4 md:py-6">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -102,16 +64,23 @@ const Home = () => {
               {featuredDescription.text}
             </p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {loading ? (
+            <p className="text-center text-muted-foreground py-8">Loading products...</p>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
           <div className="text-center mt-12">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="lg"
-              onClick={() => { navigate('/shop'); window.scrollTo(0, 0); }}
+              onClick={() => {
+                navigate("/shop");
+                window.scrollTo(0, 0);
+              }}
             >
               View All Products
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -120,29 +89,28 @@ const Home = () => {
         </div>
       </section>
 
-      {/* About Preview */}
       <section className="bg-muted py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className={`${getContent('vision_title').className} mb-6`}>
-              {getContent('vision_title').text}
+            <h2 className={`${getContent("vision_title").className} mb-6`}>
+              {getContent("vision_title").text}
             </h2>
-            <p className={`${getContent('vision_description').className} text-muted-foreground mb-8`}>
-              {getContent('vision_description').text}
+            <p className={`${getContent("vision_description").className} text-muted-foreground mb-8`}>
+              {getContent("vision_description").text}
             </p>
             <div className="flex gap-6 justify-center mb-8">
-              <a 
-                href="https://www.instagram.com/soulista__/" 
-                target="_blank" 
+              <a
+                href="https://www.instagram.com/soulista__/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-smooth flex items-center gap-2"
               >
                 <Instagram className="h-6 w-6" />
                 <span>Follow us on Instagram</span>
               </a>
-              <a 
-                href="https://www.facebook.com/Soulistaa" 
-                target="_blank" 
+              <a
+                href="https://www.facebook.com/Soulistaa"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-smooth flex items-center gap-2"
               >

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -28,6 +29,7 @@ import { toast } from "@/hooks/use-toast";
 import { GripVertical, Plus, Pencil, Trash2, X } from "lucide-react";
 
 import { MediaPicker } from "@/components/MediaPicker";
+import { CATEGORY_SETTINGS_KEY } from "@/hooks/useCategorySettings";
 
 interface CategorySetting {
   id: string;
@@ -107,6 +109,7 @@ function SortableCategoryRow({
 }
 
 export function CategorySettings() {
+  const queryClient = useQueryClient();
   const [categorySettings, setCategorySettings] = useState<CategorySetting[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategorySetting | null>(null);
@@ -161,6 +164,7 @@ export function CategorySettings() {
       );
       const err = results.find((r) => r.error)?.error;
       if (err) throw err;
+      void queryClient.invalidateQueries({ queryKey: CATEGORY_SETTINGS_KEY });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Failed to save order";
       toast({ title: "Error", description: message, variant: "destructive" });
@@ -198,6 +202,7 @@ export function CategorySettings() {
       } else {
         toast({ title: "Success", description: "Category settings updated" });
         fetchCategorySettings();
+        void queryClient.invalidateQueries({ queryKey: CATEGORY_SETTINGS_KEY });
         resetForm();
       }
     } else {
@@ -213,6 +218,7 @@ export function CategorySettings() {
       } else {
         toast({ title: "Success", description: "Category settings created" });
         fetchCategorySettings();
+        void queryClient.invalidateQueries({ queryKey: CATEGORY_SETTINGS_KEY });
         resetForm();
       }
     }
@@ -241,6 +247,7 @@ export function CategorySettings() {
     } else {
       toast({ title: "Success", description: "Category settings deleted" });
       fetchCategorySettings();
+      void queryClient.invalidateQueries({ queryKey: CATEGORY_SETTINGS_KEY });
     }
   };
 

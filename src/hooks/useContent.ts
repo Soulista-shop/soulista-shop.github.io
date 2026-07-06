@@ -1,37 +1,42 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-interface ContentSetting {
+export interface ContentSetting {
   section: string;
   text_content: string;
   font_size: string;
   font_family: string;
 }
 
+export const CONTENT_SETTINGS_KEY = ["content-settings"] as const;
+
 export function useContent() {
-  const [content, setContent] = useState<Record<string, ContentSetting>>({});
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useQuery({
+    queryKey: CONTENT_SETTINGS_KEY,
+    queryFn: async (): Promise<Record<string, ContentSetting>> => {
+      const { data: rows, error } = await supabase.from("content_settings" as any).select("*");
 
-  useEffect(() => {
-    fetchContent();
-  }, []);
+      if (error) throw error;
+      return (rows as ContentSetting[]).reduce(
+        (acc, item) => {
+          acc[item.section] = item;
+          return acc;
+        },
+        {} as Record<string, ContentSetting>
+      );
+    },
+    staleTime: 5 * 60_000,
+  });
 
-  const fetchContent = async () => {
-    const { data, error } = await supabase
-      .from("content_settings" as any)
-      .select("*");
+  const content = useMemo(() => data ?? {}, [data]);
 
-    if (!error && data) {
-      const contentMap = (data as any[]).reduce((acc, item) => {
-        acc[item.section] = item;
-        return acc;
-      }, {} as Record<string, ContentSetting>);
-      setContent(contentMap);
-    }
-    setLoading(false);
-  };
-
-  const getContent = (section: string, defaultText: string = "", defaultSize: string = "text-base", defaultFont: string = "font-normal") => {
+  const getContent = (
+    section: string,
+    defaultText: string = "",
+    defaultSize: string = "text-base",
+    defaultFont: string = "font-normal"
+  ) => {
     const setting = content[section];
     return {
       text: setting?.text_content || defaultText,
@@ -39,5 +44,5 @@ export function useContent() {
     };
   };
 
-  return { content, loading, getContent };
+  return { content, loading: isLoading, getContent };
 }

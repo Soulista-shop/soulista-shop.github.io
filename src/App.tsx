@@ -20,7 +20,14 @@ import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import Setup from "./pages/Setup";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

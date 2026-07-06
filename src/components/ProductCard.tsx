@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
 import { Card, CardContent, CardFooter } from "./ui/card";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useCategorySettingsMap } from "@/hooks/useCategorySettings";
 
 interface MinimalProduct {
   id: string | number;
@@ -17,57 +16,31 @@ interface MinimalProduct {
   sizes?: string[] | null;
 }
 
-interface CategorySetting {
-  frame_enabled: boolean;
-  frame_image: string | null;
-  background_image: string | null;
-  background_opacity: number;
-  background_blur: number;
-}
-
 interface ProductCardProps {
   product: MinimalProduct;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
-  const [categorySetting, setCategorySetting] = useState<CategorySetting | null>(null);
+  const { map: categorySettingsMap } = useCategorySettingsMap();
+  const categorySetting = categorySettingsMap.get(product.category) ?? null;
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = !!product.discount_price;
-
-  useEffect(() => {
-    const fetchCategorySetting = async () => {
-      const { data } = await supabase
-        .from("category_settings")
-        .select("*")
-        .eq("category_name", product.category)
-        .single();
-      
-      if (data) {
-        setCategorySetting(data as CategorySetting);
-      }
-    };
-
-    fetchCategorySetting();
-  }, [product.category]);
-
   const hasFrame = categorySetting?.frame_enabled;
 
   return (
-    <div 
-      onClick={() => { 
-        navigate(`/product/${String(product.id)}`); 
-        window.scrollTo(0, 0); 
+    <div
+      onClick={() => {
+        navigate(`/product/${String(product.id)}`);
+        window.scrollTo(0, 0);
       }}
       className="cursor-pointer"
     >
       <Card className="group overflow-visible transition-all duration-300 hover:-translate-y-1 border-border hover:shadow-elegant">
         <div className="aspect-[3/4] relative">
-          {/* Product Image Container */}
           <div className="absolute inset-0 overflow-hidden bg-muted rounded-t-lg">
-            {/* Background Image Layer */}
             {hasFrame && categorySetting?.background_image && (
-              <div 
+              <div
                 className="absolute inset-0 bg-cover bg-center rounded-t-lg"
                 style={{
                   backgroundImage: `url(${categorySetting.background_image})`,
@@ -77,7 +50,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               />
             )}
 
-            {/* Product Image */}
             <img
               src={product.images[0] || "/placeholder.svg"}
               alt={product.name}
@@ -90,13 +62,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             />
           </div>
 
-          {/* Frame Overlay - Around the image */}
           {hasFrame && categorySetting?.frame_image && (
-            <div 
+            <div
               className="absolute inset-0 bg-center bg-no-repeat pointer-events-none z-20"
               style={{
                 backgroundImage: `url(${categorySetting.frame_image})`,
-                backgroundSize: '100% 100%',
+                backgroundSize: "100% 100%",
               }}
             />
           )}

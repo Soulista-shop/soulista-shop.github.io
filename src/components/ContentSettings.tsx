@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Save, Plus, Trash2 } from "lucide-react";
+import { CONTENT_SETTINGS_KEY } from "@/hooks/useContent";
 
 interface ContentSetting {
   id: string;
@@ -69,6 +71,7 @@ const fontFamilyOptions = [
 ];
 
 export function ContentSettings() {
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<ContentSetting[]>([]);
   const [customFonts, setCustomFonts] = useState<CustomFont[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,6 +163,7 @@ export function ContentSettings() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Content updated successfully" });
+      void queryClient.invalidateQueries({ queryKey: CONTENT_SETTINGS_KEY });
     }
     setSaving(null);
   };
@@ -195,6 +199,7 @@ export function ContentSettings() {
       toast({ title: "Error", description: e2.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Featured block updated successfully" });
+      void queryClient.invalidateQueries({ queryKey: CONTENT_SETTINGS_KEY });
     }
     setSaving(null);
   };
