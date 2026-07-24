@@ -41,19 +41,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const auth = await verifyAdmin(req);
-  if (!auth.ok) {
-    return res.status(auth.status).json({ error: auth.error });
-  }
-
   try {
+    const auth = await verifyAdmin(req);
+    if (!auth.ok) {
+      return res.status(auth.status).json({ error: auth.error });
+    }
+
     const { fields, files } = await parseMultipart(req);
     const folder = fields.folder || "";
     const uploaded = [];
 
     for (const file of files) {
       if (!file.filename) continue;
-      const key = folder ? `${folder}/${file.filename}` : file.filename;
+      const safeName = String(file.filename).replace(/[^\w.\-()+ ]/g, "_");
+      const key = folder ? `${folder}/${safeName}` : safeName;
       const url = await uploadMediaObject(key, file.buffer, file.mimeType || "application/octet-stream");
       uploaded.push({ path: key, url });
     }
@@ -65,6 +66,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ uploaded });
   } catch (err) {
     console.error("media-upload error:", err);
-    return res.status(500).json({ error: err.message || "Upload failed" });
+    const message = err?.message || "Upload failed";
+    if (/Invalid character in header content/i.test(message)) {
+      return res.status(500).json({
+        error:
+          "Upload auth header failed. Usually caused by newline characters in R2 or Supabase env vars on Vercel. Re-save R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY without spaces/newlines, then redeploy.",
+      });
+    }
+    return res.status(500).json({ error: message });
   }
 }

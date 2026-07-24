@@ -12,8 +12,9 @@ export function getMediaPublicUrl(path: string): string {
 
 async function authHeaders(): Promise<HeadersInit> {
   const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const token = data.session?.access_token?.trim();
   if (!token) throw new Error("Not authenticated");
+  if (/[\r\n]/.test(token)) throw new Error("Invalid session token. Please sign out and sign in again.");
   return { Authorization: `Bearer ${token}` };
 }
 

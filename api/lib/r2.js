@@ -1,10 +1,8 @@
 import { S3Client, ListObjectsV2Command, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { getR2PublicBase, getSupabaseConfig } from "./config.js";
+import { getR2Credentials, getR2PublicBase, getSupabaseConfig } from "./config.js";
 
 export function getR2Client() {
-  const accountId = process.env.R2_ACCOUNT_ID || "15cd065a7eb4dbb50c158aa5584a0e8c";
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const { accountId, accessKeyId, secretAccessKey } = getR2Credentials();
 
   if (!accessKeyId || !secretAccessKey) {
     return null;
@@ -18,7 +16,7 @@ export function getR2Client() {
 }
 
 export function getR2Bucket() {
-  return process.env.R2_BUCKET || "soulista-media";
+  return getR2Credentials().bucket;
 }
 
 export function getPublicBaseUrl() {
@@ -103,12 +101,16 @@ export async function deleteMediaObject(key) {
 }
 
 export async function verifyAdmin(req) {
-  const authHeader = req.headers.authorization || req.headers.Authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
+  const authHeader = (req.headers.authorization || req.headers.Authorization || "").trim();
+  if (!authHeader.toLowerCase().startsWith("bearer ")) {
     return { ok: false, status: 401, error: "Unauthorized" };
   }
 
-  const token = authHeader.slice(7);
+  const token = authHeader.slice(7).trim();
+  if (!token || /[\r\n]/.test(token)) {
+    return { ok: false, status: 401, error: "Invalid session token" };
+  }
+
   const { url: supabaseUrl, anonKey, serviceKey } = getSupabaseConfig();
   const apiKey = serviceKey || anonKey;
 
