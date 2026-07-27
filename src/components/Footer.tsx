@@ -4,7 +4,7 @@ import { SizeChartGuide } from "@/components/SizeChartGuide";
 
 export const Footer = () => {
   return (
-    <footer className="bg-muted mt-20">
+    <footer className="bg-background mt-20 border-t border-border">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}

@@ -9,6 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { CONTENT_SETTINGS_KEY } from "@/hooks/useContent";
+import {
+  applySiteBackground,
+  DEFAULT_SITE_BACKGROUND,
+  normalizeHex,
+  SITE_BACKGROUND_PRESETS,
+  SITE_BACKGROUND_SECTION,
+} from "@/lib/siteBackground";
+import { cn } from "@/lib/utils";
 
 interface ContentSetting {
   id: string;
@@ -210,12 +218,109 @@ export function ContentSettings() {
     );
   };
 
+  const handleSaveSiteBackground = async (hex: string) => {
+    const color = normalizeHex(hex);
+    setSaving("site-background");
+    applySiteBackground(color);
+
+    const existing = settings.find((s) => s.section === SITE_BACKGROUND_SECTION);
+    if (existing) {
+      const { error } = await supabase
+        .from("content_settings" as any)
+        .update({
+          text_content: color,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setSettings(settings.map((s) => (s.id === existing.id ? { ...s, text_content: color } : s)));
+        toast({ title: "Success", description: "Site background updated" });
+        void queryClient.invalidateQueries({ queryKey: CONTENT_SETTINGS_KEY });
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("content_settings" as any)
+        .insert({
+          section: SITE_BACKGROUND_SECTION,
+          text_content: color,
+          font_size: "text-base",
+          font_family: "font-normal",
+        })
+        .select("*")
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error",
+          description:
+            error.message +
+            " — If this is the first time, run the site_background migration in Supabase SQL.",
+          variant: "destructive",
+        });
+      } else {
+        setSettings([...settings, data as ContentSetting]);
+        toast({ title: "Success", description: "Site background updated" });
+        void queryClient.invalidateQueries({ queryKey: CONTENT_SETTINGS_KEY });
+      }
+    }
+    setSaving(null);
+  };
+
+  const currentSiteBackground = normalizeHex(
+    settings.find((s) => s.section === SITE_BACKGROUND_SECTION)?.text_content ||
+      DEFAULT_SITE_BACKGROUND
+  );
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Site background</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Sets the background for the whole storefront, including header and footer.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {SITE_BACKGROUND_PRESETS.map((preset) => {
+              const selected = currentSiteBackground === preset.hex;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  disabled={saving === "site-background"}
+                  onClick={() => void handleSaveSiteBackground(preset.hex)}
+                  className={cn(
+                    "group flex flex-col items-stretch gap-2 rounded-lg border p-3 text-left transition-colors touch-manipulation",
+                    selected
+                      ? "border-primary ring-2 ring-primary/30"
+                      : "border-border hover:border-foreground/30"
+                  )}
+                >
+                  <span
+                    className="block h-16 w-full rounded-md border border-black/10 shadow-sm"
+                    style={{ backgroundColor: preset.hex }}
+                    aria-hidden
+                  />
+                  <span className="text-sm font-medium">{preset.label}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{preset.hex}</span>
+                </button>
+              );
+            })}
+          </div>
+          {saving === "site-background" ? (
+            <p className="mt-3 text-sm text-muted-foreground">Saving…</p>
+          ) : null}
+        </CardContent>
+      </Card>
+
       {/* Custom Fonts Management */}
       <Card>
         <CardHeader>
@@ -290,7 +395,11 @@ export function ContentSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {settings
-            .filter((s) => s.section !== "featured_section_description")
+            .filter(
+              (s) =>
+                s.section !== "featured_section_description" &&
+                s.section !== SITE_BACKGROUND_SECTION
+            )
             .map((setting) => {
               if (setting.section === "featured_section_title") {
                 const descS = settings.find((s) => s.section === "featured_section_description");

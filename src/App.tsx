@@ -8,6 +8,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { Navigation } from "./components/Navigation";
 import { Footer } from "./components/Footer";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { SiteBackgroundProvider } from "./components/SiteBackgroundProvider";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -38,21 +39,23 @@ const App = () => (
         <ScrollToTop />
         <AuthProvider>
           <CartProvider>
-            <Navigation />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/instapay" element={<Instapay />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/setup" element={<Setup />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Footer />
+            <SiteBackgroundProvider>
+              <Navigation />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/instapay" element={<Instapay />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/setup" element={<Setup />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+            </SiteBackgroundProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
