@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 import { ShippingPlusLabel } from "@/components/ShippingPlusLabel";
+import { SizeChartGuide } from "@/components/SizeChartGuide";
 
 interface Product {
   id: string;
@@ -277,7 +278,10 @@ const ProductDetail = () => {
 
             {needsSize ? (
               <div className="mb-6 space-y-3">
-                <p className="text-sm font-medium">Select size</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">Select size</p>
+                  <SizeChartGuide />
+                </div>
                 <div
                   className="flex flex-wrap gap-2"
                   role="group"
