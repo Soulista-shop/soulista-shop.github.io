@@ -27,13 +27,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Package, Settings, Upload, Truck, GripVertical, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Settings, Upload, Truck, GripVertical, Star, Palette } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategorySettings } from "@/components/CategorySettings";
 import { MediaManager } from "@/components/MediaManager";
 import { MediaPicker } from "@/components/MediaPicker";
 import { ContentSettings } from "@/components/ContentSettings";
+import { SiteAppearanceSettings } from "@/components/SiteAppearanceSettings";
 import { ContactSettings } from "@/components/ContactSettings";
 import { ShippingSettings } from "@/components/ShippingSettings";
 
@@ -160,7 +161,15 @@ export default function Admin() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "products" | "orders" | "categories" | "media" | "users" | "content" | "contact" | "shipping"
+    | "products"
+    | "orders"
+    | "categories"
+    | "media"
+    | "users"
+    | "content"
+    | "appearance"
+    | "contact"
+    | "shipping"
   >("products");
   const [showMainImagePicker, setShowMainImagePicker] = useState(false);
   const [showGalleryImagePicker, setShowGalleryImagePicker] = useState(false);
@@ -540,6 +549,13 @@ export default function Admin() {
               onClick={() => setActiveTab("content")}
             >
               Content
+            </Button>
+            <Button
+              variant={activeTab === "appearance" ? "default" : "outline"}
+              onClick={() => setActiveTab("appearance")}
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Appearance
             </Button>
             <Button
               variant={activeTab === "contact" ? "default" : "outline"}
@@ -1031,6 +1047,8 @@ export default function Admin() {
         {activeTab === "media" && <MediaManager />}
 
         {activeTab === "content" && <ContentSettings />}
+
+        {activeTab === "appearance" && <SiteAppearanceSettings />}
 
         {activeTab === "contact" && <ContactSettings />}
 
