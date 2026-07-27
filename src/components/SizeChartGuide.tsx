@@ -34,7 +34,7 @@ export function SizeChartGuide({ className }: SizeChartGuideProps) {
       type="button"
       onClick={() => setOpen(true)}
       className={cn(
-        "inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline touch-manipulation",
+        "inline-flex items-center gap-1.5 py-1 text-sm text-foreground/80 underline underline-offset-4 decoration-foreground/40 transition-colors hover:text-foreground hover:decoration-foreground touch-manipulation",
         className
       )}
     >
