@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Ruler } from "lucide-react";
 import {
   Dialog,
@@ -23,9 +23,18 @@ const SIZE_CHART_SRC = "/size-chart.jpg";
 
 interface SizeChartGuideProps {
   className?: string;
+  /** product = underlined link with icon; footer = plain footer-style link */
+  variant?: "product" | "footer";
+  label?: string;
+  children?: ReactNode;
 }
 
-export function SizeChartGuide({ className }: SizeChartGuideProps) {
+export function SizeChartGuide({
+  className,
+  variant = "product",
+  label = "Size guide",
+  children,
+}: SizeChartGuideProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -34,12 +43,22 @@ export function SizeChartGuide({ className }: SizeChartGuideProps) {
       type="button"
       onClick={() => setOpen(true)}
       className={cn(
-        "inline-flex items-center gap-1.5 py-1 text-sm text-foreground/80 underline underline-offset-4 decoration-foreground/40 transition-colors hover:text-foreground hover:decoration-foreground touch-manipulation",
+        "touch-manipulation transition-colors",
+        variant === "product" &&
+          "inline-flex items-center gap-1.5 py-1 text-sm text-foreground/80 underline underline-offset-4 decoration-foreground/40 hover:text-foreground hover:decoration-foreground",
+        variant === "footer" &&
+          "block w-full text-left text-sm text-muted-foreground hover:text-primary transition-smooth",
         className
       )}
     >
-      <Ruler className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      Size guide
+      {children ?? (
+        <>
+          {variant === "product" ? (
+            <Ruler className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          ) : null}
+          {label}
+        </>
+      )}
     </button>
   );
 

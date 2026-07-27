@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Mail } from "lucide-react";
+import { SizeChartGuide } from "@/components/SizeChartGuide";
 
 export const Footer = () => {
   return (
@@ -39,7 +40,7 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Customer Service</h4>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Size Guide</p>
+              <SizeChartGuide variant="footer" label="Size Guide" />
               <p className="text-sm text-muted-foreground">Shipping Info</p>
               <p className="text-sm text-muted-foreground">Returns</p>
             </div>
